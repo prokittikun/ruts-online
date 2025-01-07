@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  app:
+    build: .
+    environment:
+      - NEXTAUTH_URL="http://localhost:3000"
+      - DATABASE_URL="postgresql://postgres:1234567za@db/iptm-logistics-hub"
+      - NEXTAUTH_SECRET="zyLVnP6ItUFNM+2/yQzayRc0en71e3rayyU1m1etA6M="
+    depends_on:
+      - db
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+  db:
+    image: postgres:17
+    container_name: db
+    restart: always
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=1234567za
+    ports:
+      - 5432:5432
