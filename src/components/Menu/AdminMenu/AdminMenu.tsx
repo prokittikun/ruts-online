@@ -6,6 +6,8 @@ import {
   IconBox,
   IconPackage,
   IconHome,
+  IconUser,
+  IconUserPlus,
 } from "@tabler/icons-react";
 import classes from "./AdminMenu.module.css";
 import clsx from "clsx";
@@ -17,13 +19,8 @@ import Link from "next/link";
 const prefix = "/ADMIN";
 
 const data = [
-  { link: "/announce", label: "หน้าหลัก", icon: IconHome },
-  { link: "/equipment", label: "รายการครุภัณฑ์", icon: IconPackage },
-  {
-    link: "/equipment-history",
-    label: "ประวัติการยืม",
-    icon: IconFileDescription,
-  },
+  { link: "", label: "โครงการทั้งหมด", icon: IconHome },
+  { link: "/user-management", label: "เพิ่มผู้ใช้งาน", icon: IconUserPlus },
 ];
 
 export function AdminMenu() {
@@ -42,7 +39,7 @@ export function AdminMenu() {
         onClick={() => navigate.push(prefix + item.link)}
         justify="start"
         variant={isCurrentPath(prefix + item.link) ? "gradient" : "subtle"}
-        gradient={{ from: "orange", to: "yellow", deg: 90 }}
+        gradient={{ from: "blue", to: "cyan", deg: 90 }}
         leftSection={<item.icon stroke={1.5} />}
         fullWidth
         key={index}
@@ -58,7 +55,7 @@ export function AdminMenu() {
     <nav>
       <div className={clsx("flex flex-col gap-2")}>
         {links}
-        {sessionStatus == "authenticated" ? (
+        {/* {sessionStatus == "authenticated" ? (
           <Button
             type="submit"
             justify="start"
@@ -80,7 +77,7 @@ export function AdminMenu() {
           >
             เข้าสู่ระบบ
           </Button>
-        )}
+        )} */}
       </div>
     </nav>
   );

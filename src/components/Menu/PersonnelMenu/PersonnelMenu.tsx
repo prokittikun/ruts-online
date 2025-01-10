@@ -61,7 +61,7 @@ export function PersonnelMenu() {
     <nav>
       <div className={clsx("flex flex-col gap-2")}>
         {links}
-        {sessionStatus == "authenticated" ? (
+        {/* {sessionStatus == "authenticated" ? (
           <Button
             type="submit"
             justify="start"
@@ -83,7 +83,7 @@ export function PersonnelMenu() {
           >
             เข้าสู่ระบบ
           </Button>
-        )}
+        )} */}
       </div>
     </nav>
   );

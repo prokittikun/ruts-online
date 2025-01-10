@@ -1,6 +1,6 @@
 import { createTRPCRouter } from "@/server/api/trpc";
 import { getAllProject, getProjectById, getProjectType } from "./GET";
-import { createProject, updateProject } from "./POST";
+import { approveProject, createProject, rejectProject, updateProject } from "./POST";
 import { deleteProject } from "./DELETE";
 
 export const ProjectRouter = createTRPCRouter({
@@ -9,7 +9,9 @@ export const ProjectRouter = createTRPCRouter({
   deleteProject,
   getAllProject,
   getProjectById,
-  getProjectType
+  getProjectType,
+  approveProject,
+  rejectProject
   // updateEquipment: updateEquipment,
   // deleteEquipment: deleteEquipment,
 });

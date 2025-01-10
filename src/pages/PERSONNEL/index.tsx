@@ -1,32 +1,47 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import { type GetServerSideProps } from "next";
-import { Badge, Button, Group, Input, Modal, Select } from "@mantine/core";
-import { IconEdit, IconSearch, IconTrash } from "@tabler/icons-react";
-import { Table } from "antd";
-import { FilePlus2, Plus } from "lucide-react";
-import { type ColumnProps } from "antd/es/table";
-import { useDisclosure } from "@mantine/hooks";
-import ItemStructure from "@/components/ItemStructure";
 import { ControlledInput } from "@/components/Controlled";
-import { Path, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { DateTimeFormatOptions } from "@/utils/DateTimeFormatOptions";
+import ControlledDatePicker from "@/components/ControlledDatePicker";
+import ControlledInputNumber from "@/components/ControlledInputNumber";
+import ControlledSelect from "@/components/ControlledSelect";
+import ItemStructure from "@/components/ItemStructure";
 import {
   CreateProjectSchema,
   type ICreateProject,
 } from "@/schemas/projects/createProject";
-import { useRouter } from "next/navigation";
-import { api } from "@/utils/api";
-import ControlledInputNumber from "@/components/ControlledInputNumber";
-import ControlledDatePicker from "@/components/ControlledDatePicker";
-import { toast } from "sonner";
-import ControlledSelect from "@/components/ControlledSelect";
 import {
   IUpdateProject,
   UpdateProjectSchema,
 } from "@/schemas/projects/updateProject";
+import { DateTimeFormatOptions } from "@/utils/DateTimeFormatOptions";
+import { FindProjectStatus } from "@/utils/ProjectStatusMap";
+import { api } from "@/utils/api";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Badge,
+  Button,
+  Checkbox,
+  Group,
+  Input,
+  Modal
+} from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
+import { ProjectStatus } from "@prisma/client";
+import {
+  IconEdit,
+  IconFilter,
+  IconSearch,
+  IconTrash,
+} from "@tabler/icons-react";
+import { Table } from "antd";
+import { type ColumnProps } from "antd/es/table";
+import { FilePlus2, Plus } from "lucide-react";
+import { useSession } from "next-auth/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { useDebounceCallback } from "usehooks-ts";
 // export const getServerSideProps: GetServerSideProps = async (ctx) => {
 //   // const token = await getToken({
 //   //     req: ctx.req,
@@ -46,6 +61,7 @@ import { modals } from "@mantine/modals";
 //   // };
 // };
 function Index() {
+  const { data: session, status } = useSession();
   const [opened, { open, close }] = useDisclosure(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingProjectId, setEditingProjectId] = React.useState<string | null>(
@@ -55,6 +71,30 @@ function Index() {
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const navigate = useRouter();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [selectedStatuses, setSelectedStatuses] = useState<ProjectStatus[]>(() => {
+    const statusParam = searchParams.get('status');
+    return statusParam ? statusParam.split(',') as ProjectStatus[] : [];
+  });
+
+  const [showStatusFilter, setShowStatusFilter] = useState(false);
+
+  const statusOptions = [
+    { label: 'รอดำเนินการ', value: ProjectStatus.PENDING },
+    { label: 'กำลังดำเนินการ', value: ProjectStatus.IN_PROGRESS },
+    { label: 'เสร็จสิ้น', value: ProjectStatus.COMPLETED },
+    { label: 'ยกเลิก', value: ProjectStatus.CANCELED },
+    { label: 'ปฏิเสธ', value: ProjectStatus.REJECT }
+  ];
+
+  useEffect(() => {
+    const statusParam = searchParams.get("status");
+    if (statusParam) {
+      setSelectedStatuses(statusParam.split(",") as ProjectStatus[]);
+    }
+  }, [searchParams]);
+
   const createProjectApi = api.project.createProject.useMutation();
   const {
     data: getAllProjectData,
@@ -64,6 +104,7 @@ function Index() {
     currentPage: currentPage,
     perPages: perPage,
     keyword: searchValue,
+    status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
   });
 
   const getProjectTypeApi = api.project.getProjectType.useQuery(undefined, {
@@ -93,6 +134,41 @@ function Index() {
   } = useForm<ProjectFormData>({
     resolver: zodResolver(combinedSchema),
   });
+
+  const handleStatusChange = (statusValue: ProjectStatus) => {
+    const newSelectedStatuses = selectedStatuses.includes(statusValue)
+      ? selectedStatuses.filter(s => s !== statusValue)
+      : [...selectedStatuses, statusValue];
+    
+    setSelectedStatuses(newSelectedStatuses);
+    
+    // Update URL
+    const params = new URLSearchParams(searchParams.toString());
+    if (newSelectedStatuses.length > 0) {
+      params.set('status', newSelectedStatuses.join(','));
+    } else {
+      params.delete('status');
+    }
+    
+    router.push(`?${params.toString()}`);
+    setCurrentPage(1);
+    void refetch();
+  };
+
+  const StatusFilterDropdown = () => (
+    <div className="rounded-md bg-white p-4 shadow-lg">
+      <div className="flex flex-col gap-2">
+        {statusOptions.map((status) => (
+          <Checkbox
+            key={status.value}
+            label={status.label}
+            checked={selectedStatuses.includes(status.value)}
+            onChange={() => handleStatusChange(status.value)}
+          />
+        ))}
+      </div>
+    </div>
+  );
 
   const onSubmit = (data: ProjectFormData) => {
     try {
@@ -177,8 +253,8 @@ function Index() {
       modals.openConfirmModal({
         title: (
           <span>
-            ยินยันที่จะโครงการ{" "}
-            <Badge color="blue">{projectData.name}</Badge> ใช่หรือไม่ ?
+            ยินยันที่จะโครงการ <Badge color="blue">{projectData.name}</Badge>{" "}
+            ใช่หรือไม่ ?
           </span>
         ),
         children: (
@@ -192,26 +268,29 @@ function Index() {
         onCancel: () => console.log("Cancel"),
         onConfirm: () => {
           const idToast = toast.loading("กำลังลบโครงการ...");
-          deleteProjectApi.mutate(
-            projectData.id,
-            {
-              onSuccess: () => {
-                toast.success("ลบโครงการสำเร็จ", { id: idToast });
-                void refetch();
-              },
-              onError: (error) => {
-                toast.error("ลบโครงการไม่สำเร็จ", {
-                  id: idToast,
-                  description: error.message,
-                });
-              },
+          deleteProjectApi.mutate(projectData.id, {
+            onSuccess: () => {
+              toast.success("ลบโครงการสำเร็จ", { id: idToast });
+              void refetch();
             },
-          );
+            onError: (error) => {
+              toast.error("ลบโครงการไม่สำเร็จ", {
+                id: idToast,
+                description: error.message,
+              });
+            },
+          });
         },
       });
     } catch (error) {}
   };
-  
+
+  const onSearchChange = useDebounceCallback((value: string) => {
+    setSearchValue(value);
+    setCurrentPage(1);
+    void refetch();
+  }, 500);
+
   type ColumnType = NonNullable<typeof getAllProjectData>["data"] extends
     | (infer T)[]
     | null
@@ -220,7 +299,12 @@ function Index() {
     : never;
   return (
     <>
-      <Modal opened={opened} onClose={close} size={"70%"} title="เพิ่มโครงการ">
+      <Modal
+        opened={opened}
+        onClose={close}
+        size={"70%"}
+        title={isEditMode ? "แก้ไขโครงการ" : "เพิ่มโครงการ"}
+      >
         <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
           <ItemStructure title="ชื่อโครงการ" required mode="vertical">
             <ControlledInput
@@ -320,55 +404,75 @@ function Index() {
       <div className="flex flex-col gap-5">
         <div className="flex w-full items-center justify-between">
           <span className="text-2xl font-bold">โครงการทั้งหมด</span>
-          <div className="flex gap-2">
-            <Button
-              size="md"
-              color="blue"
-              leftSection={<FilePlus2 />}
-              onClick={() => {
-                // setEditingEquipmentId(null);
-                // setIsEditMode(false);
-                // reset();
-                // open();
-                navigate.push("/PERSONNEL/approve-docx");
-              }}
-            >
-              สร้างแบบเสนอขออนุมัติโครงการ
-            </Button>
-            <Button
-              size="md"
-              color="blue"
-              leftSection={<FilePlus2 />}
-              onClick={() => {
-                // setEditingEquipmentId(null);
-                // setIsEditMode(false);
-                // reset();
-                // open();
-                navigate.push("/PERSONNEL/support-budget-docx");
-              }}
-            >
-              สร้างแบบเสนอขอเงินสนับสนุนโครงการ
-            </Button>
-            <Button
-              size="md"
-              color="blue"
-              leftSection={<Plus />}
-              onClick={() => {
-                setEditingProjectId(null);
-                setIsEditMode(false);
-                reset();
-                open();
-              }}
-            >
-              เพิ่มโครงการ
-            </Button>
-          </div>
+          {status === "authenticated" ? (
+            <div className="flex gap-2">
+              <Button
+                size="md"
+                color="blue"
+                leftSection={<FilePlus2 />}
+                onClick={() => {
+                  // setEditingEquipmentId(null);
+                  // setIsEditMode(false);
+                  // reset();
+                  // open();
+                  navigate.push("/PERSONNEL/approve-docx");
+                }}
+              >
+                สร้างแบบเสนอขออนุมัติโครงการ
+              </Button>
+              <Button
+                size="md"
+                color="blue"
+                leftSection={<FilePlus2 />}
+                onClick={() => {
+                  // setEditingEquipmentId(null);
+                  // setIsEditMode(false);
+                  // reset();
+                  // open();
+                  navigate.push("/PERSONNEL/support-budget-docx");
+                }}
+              >
+                สร้างแบบเสนอขอเงินสนับสนุนโครงการ
+              </Button>
+              <Button
+                size="md"
+                color="blue"
+                leftSection={<Plus />}
+                onClick={() => {
+                  setEditingProjectId(null);
+                  setIsEditMode(false);
+                  reset();
+                  open();
+                }}
+              >
+                เพิ่มโครงการ
+              </Button>
+            </div>
+          ) : null}
         </div>
-        <Input
-          // onChange={(e) => onSearchChange(e.target.value)}
+        {/* <Input
+          onChange={(e) => onSearchChange(e.target.value)}
           placeholder="ค้นหา"
           leftSection={<IconSearch stroke={1.5} />}
-        />
+        /> */}
+        <div className="flex gap-4">
+          <Input
+            className="flex-1"
+            onChange={(e) => onSearchChange(e.target.value)}
+            placeholder="ค้นหา"
+            leftSection={<IconSearch stroke={1.5} />}
+          />
+          <Button
+            variant="outline"
+            leftSection={<IconFilter size="1rem" />}
+            onClick={() => setShowStatusFilter(!showStatusFilter)}
+          >
+            ตัวกรอง{" "}
+            {selectedStatuses.length > 0 && `(${selectedStatuses.length})`}
+          </Button>
+        </div>
+
+        {showStatusFilter && <StatusFilterDropdown />}
 
         <Table //<DataType>
           // rowSelection={rowSelection}
@@ -424,7 +528,11 @@ function Index() {
                 dataIndex: "project_status",
                 key: "project_status",
                 render: (_, r) => (
-                  <div className="whitespace-nowrap">{r.project_status}</div>
+                  <Badge color={FindProjectStatus(r.project_status)?.color}>
+                    <div className="whitespace-nowrap">
+                      {FindProjectStatus(r.project_status)?.description}
+                    </div>
+                  </Badge>
                 ),
               },
               {
@@ -476,31 +584,39 @@ function Index() {
                   </div>
                 ),
               },
-              {
-                title: "ดำเนินการ",
-                render: (_, r) => (
-                  <Group align="center">
-                    <Button
-                      variant="filled"
-                      leftSection={<IconEdit size={"1rem"} stroke={1.5} />}
-                      color="blue"
-                      size="xs"
-                      onClick={() => handleOnClickEdit(r.id)}
-                    >
-                      แก้ไข
-                    </Button>
-                    <Button
-                      variant="filled"
-                      leftSection={<IconTrash size={"1rem"} stroke={1.5} />}
-                      color="red"
-                      size="xs"
-                      onClick={() => onDelete(r)}
-                    >
-                      ลบ
-                    </Button>
-                  </Group>
-                ),
-              },
+              ...(status === "authenticated"
+                ? [
+                    {
+                      title: "ดำเนินการ",
+                      render: (_, r: ColumnType) => (
+                        <Group align="center">
+                          <Button
+                            variant="filled"
+                            leftSection={
+                              <IconEdit size={"1rem"} stroke={1.5} />
+                            }
+                            color="blue"
+                            size="xs"
+                            onClick={() => handleOnClickEdit(r.id)}
+                          >
+                            แก้ไข
+                          </Button>
+                          <Button
+                            variant="filled"
+                            leftSection={
+                              <IconTrash size={"1rem"} stroke={1.5} />
+                            }
+                            color="red"
+                            size="xs"
+                            onClick={() => onDelete(r)}
+                          >
+                            ลบ
+                          </Button>
+                        </Group>
+                      ),
+                    },
+                  ]
+                : []),
             ] as ColumnProps<ColumnType>[]
           }
           dataSource={getAllProjectData?.data}

@@ -55,6 +55,7 @@ enum ProjectStatus {
     COMPLETED
     PENDING
     CANCELED
+    REJECT
 }
 
 model ProjectType {

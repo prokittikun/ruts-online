@@ -1,7 +1,9 @@
 import {
   ActionIcon,
   AppShell,
+  Avatar,
   Burger,
+  Button,
   Group,
   Image,
   useComputedColorScheme,
@@ -9,17 +11,23 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useContext, useEffect } from "react";
 import { AdminMenu } from "@/components/Menu/AdminMenu/AdminMenu";
 import classes from "@/styles/utils.module.css";
 import cx from "clsx";
 import { PersonnelMenu } from "@/components/Menu/PersonnelMenu/PersonnelMenu";
+import { signOut, useSession } from "next-auth/react";
+import { Dropdown } from "antd";
+import { FindRole } from "@/utils/positionMap";
+import { LogOutIcon } from "lucide-react";
 export default function PersonnelLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
   const { setColorScheme } = useMantineColorScheme({
     keepTransitions: true,
@@ -47,7 +55,7 @@ export default function PersonnelLayout({
       }}
       padding="md"
     >
-      <AppShell.Header className="flex items-center gap-2 px-3">
+      <AppShell.Header className="flex items-center justify-between gap-2 px-3">
         <Group h="100%" px="md" w="100%">
           <Burger
             opened={mobileOpened}
@@ -62,9 +70,75 @@ export default function PersonnelLayout({
             size="sm"
           />
           <Link href={"/"}>
-            <div className="text-xl font-bold ">RUTS Online</div>
+            {/* <div className="text-xl font-bold ">RUTS Online</div> */}
+            <img src="/logo.jpg" width={100} alt="" />
           </Link>
         </Group>
+        {status === "authenticated" ? (
+          <Dropdown
+            menu={{
+              items: [
+                // ...(getOrganizationByUserIdApi?.data?.orgnameth
+                //   ? [
+                //       {
+                //         key: "1",
+                //         label: (
+                //           <div className="max-w-48 text-black text-wrap">
+                //             {getOrganizationByUserIdApi.data?.orgnameth}
+                //           </div>
+                //         ),
+                //         danger: false,
+                //         disabled: true,
+                //       },
+                //     ]
+                //   : []),
+                {
+                  key: "2",
+                  icon: <LogOutIcon />,
+                  label: (
+                    <div
+                      onClick={() =>
+                        signOut({
+                          callbackUrl: "/",
+                        })
+                      }
+                    >
+                      ออกจากระบบ
+                    </div>
+                  ),
+                  danger: true,
+                },
+              ],
+            }}
+          >
+            <a
+              onClick={(e) => e.preventDefault()}
+              className="flex cursor-pointer items-center gap-2"
+            >
+              <Avatar className="">
+                {!session.user.firstName || !session.user.lastName
+                  ? "N/A"
+                  : session.user.firstName
+                      .charAt(0)
+                      .concat(session.user.lastName.charAt(0))}
+              </Avatar>
+              <div className="flex flex-col text-xs">
+                <div className="text-nowrap">{session.user.name}</div>
+                <div className="text-nowrap">
+                  {FindRole(session.user.role ?? "NonePosition")?.description}
+                </div>
+              </div>
+            </a>
+          </Dropdown>
+        ) : (
+          <div className="flex gap-2">
+            {/* <ButtonSD to="/sign-in" color="secondary"> */}
+            <Button onClick={()=>{
+              router.push("/");
+            }} color="blue" >ลงชื่อเข้าใช้</Button>
+            {/* </ButtonSD> */}
+          </div>
+        )}
         {/* {colorScheme === "dark" ? (
             <ActionIcon variant="subtle" onClick={() => setColorScheme("light")}>
               <IconSun size={18} />

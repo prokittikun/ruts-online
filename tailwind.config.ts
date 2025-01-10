@@ -13,6 +13,5 @@ export default {
       },
     },
   },
-  darkMode: ["class", '[data-mantine-color-scheme="dark"]'],
   plugins: [],
 } satisfies Config;

@@ -70,7 +70,7 @@ export default function Home() {
       const idToast = toast.loading("กำลังนำท่านเข้าสู่ระบบ...");
       try {
         console.log("seesionn");
-        
+
         const session = await getSession();
         const userRole = session?.user?.role;
 
@@ -86,7 +86,7 @@ export default function Home() {
         }
       } catch (error) {
         console.log("error", error);
-        
+
         toast.error("เข้าสู่ระบบไม่สำเร็จ", {
           description: "กรุณาลองใหม่อีกครั้ง",
         });
@@ -96,7 +96,7 @@ export default function Home() {
     } else {
       // จัดการ error
       console.log("response", response);
-      
+
       toast.error("เข้าสู่ระบบไม่สำเร็จ", {
         description: "กรุณาลองใหม่อีกครั้ง",
       });
@@ -153,7 +153,9 @@ export default function Home() {
         </form>
       </Modal>
       <div className="flex h-16 w-full items-center justify-between bg-[#081c5c] px-[20rem]">
-        <div className="text-3xl font-bold text-white">RUTS</div>
+        {/* <div className="text-3xl font-bold text-white">RUTS</div> */}
+        <img src="/logo.jpg" width={100} alt="" />
+
         <Button variant="outline" className="text-white" onClick={open}>
           เข้าสู่ระบบ
         </Button>
@@ -163,7 +165,9 @@ export default function Home() {
         <div className="flex h-28 w-full items-center justify-between px-[25rem]">
           <Button
             variant="filled"
-            onClick={open}
+            onClick={() => {
+              router.push("/PERSONNEL?status=IN_PROGRESS");
+            }}
             color="#081c5c"
             leftSection={<IconClock stroke={2} />}
             style={{ width: "200px", height: "60px" }}
@@ -174,7 +178,9 @@ export default function Home() {
           </Button>
           <Button
             variant="filled"
-            onClick={open}
+            onClick={() => {
+              router.push("/PERSONNEL?status=COMPLETED");
+            }}
             color="#081c5c"
             leftSection={<IconCalendarCheck stroke={2} />}
             style={{ width: "200px", height: "60px" }}
@@ -185,7 +191,9 @@ export default function Home() {
           </Button>
           <Button
             variant="filled"
-            onClick={open}
+            onClick={() => {
+              router.push("/PERSONNEL?status=PENDING");
+            }}
             color="#081c5c"
             leftSection={<IconHourglass stroke={2} />}
             style={{ width: "200px", height: "60px" }}

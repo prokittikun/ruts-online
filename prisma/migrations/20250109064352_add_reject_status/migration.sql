@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `Project` MODIFY `project_status` ENUM('IN_PROGRESS', 'COMPLETED', 'PENDING', 'CANCELED', 'REJECT') NOT NULL;

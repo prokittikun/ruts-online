@@ -22,6 +22,8 @@ declare module "next-auth/jwt" {
     id: string;
     email: string;
     role: Role;
+    firstName: string;
+    lastName: string;
     exp: number;
   }
 }
@@ -32,6 +34,8 @@ declare module "next-auth" {
       id: string;
       email: string;
       role: Role;
+      firstName: string;
+      lastName: string;
 
       // ...other properties
       // role: UserRole;
@@ -42,6 +46,8 @@ declare module "next-auth" {
     id: string;
     email: string;
     role: Role;
+    firstName: string;
+    lastName: string;
   }
 }
 
@@ -53,7 +59,7 @@ declare module "next-auth" {
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
-    maxAge: 30*60, // 30 days
+    maxAge: 30 * 60, // 30 days
   },
   callbacks: {
     session: async ({ session, token }) => {
@@ -61,6 +67,9 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.email = token.email;
         session.user.role = token.role;
+        session.user.firstName = token.firstName;
+        session.user.lastName = token.lastName;
+        session.user.name = `${token.firstName} ${token.lastName}`
       }
 
       return session;
@@ -70,6 +79,9 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.email = user.email;
         token.role = user.role;
+        token.firstName = user.firstName;
+        token.lastName = user.lastName;
+        token.name = `${user.firstName} ${user.lastName}`
       }
 
       return token;
@@ -110,6 +122,8 @@ export const authOptions: NextAuthOptions = {
           return {
             id: user.id as string,
             email: user.email as string,
+            firstName: user.first_name ?? "",
+            lastName: user.last_name ?? "",
             role: user.role as Role,
           };
         } catch (err) {
