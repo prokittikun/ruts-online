@@ -17,22 +17,18 @@ import { DateTimeFormatOptions } from "@/utils/DateTimeFormatOptions";
 import { FindProjectStatus } from "@/utils/ProjectStatusMap";
 import { api } from "@/utils/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Badge,
-  Button,
-  Checkbox,
-  Group,
-  Input,
-  Modal
-} from "@mantine/core";
+import { Badge, Button, Checkbox, Input, Modal, Popover } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { modals } from "@mantine/modals";
 import { ProjectStatus } from "@prisma/client";
 import {
+  IconCheckbox,
   IconEdit,
   IconFilter,
+  IconReload,
   IconSearch,
   IconTrash,
+  IconX,
 } from "@tabler/icons-react";
 import { Table } from "antd";
 import { type ColumnProps } from "antd/es/table";
@@ -73,19 +69,21 @@ function Index() {
   const navigate = useRouter();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [selectedStatuses, setSelectedStatuses] = useState<ProjectStatus[]>(() => {
-    const statusParam = searchParams.get('status');
-    return statusParam ? statusParam.split(',') as ProjectStatus[] : [];
-  });
+  const [selectedStatuses, setSelectedStatuses] = useState<ProjectStatus[]>(
+    () => {
+      const statusParam = searchParams.get("status");
+      return statusParam ? (statusParam.split(",") as ProjectStatus[]) : [];
+    },
+  );
 
   const [showStatusFilter, setShowStatusFilter] = useState(false);
 
   const statusOptions = [
-    { label: 'รอดำเนินการ', value: ProjectStatus.PENDING },
-    { label: 'กำลังดำเนินการ', value: ProjectStatus.IN_PROGRESS },
-    { label: 'เสร็จสิ้น', value: ProjectStatus.COMPLETED },
-    { label: 'ยกเลิก', value: ProjectStatus.CANCELED },
-    { label: 'ปฏิเสธ', value: ProjectStatus.REJECT }
+    { label: "รอดำเนินการ", value: ProjectStatus.PENDING },
+    { label: "กำลังดำเนินการ", value: ProjectStatus.IN_PROGRESS },
+    { label: "เสร็จสิ้น", value: ProjectStatus.COMPLETED },
+    { label: "ยกเลิก", value: ProjectStatus.CANCELED },
+    { label: "ปฏิเสธ", value: ProjectStatus.REJECT },
   ];
 
   useEffect(() => {
@@ -117,6 +115,9 @@ function Index() {
   const updateProjectApi = api.project.updateProject.useMutation();
   const deleteProjectApi = api.project.deleteProject.useMutation();
   const getProjectByIdApi = api.project.getProjectById.useMutation();
+  const resentProjectApi = api.project.resentProject.useMutation();
+  const cancelProjectApi = api.project.cancelProject.useMutation();
+  const completedProjectApi = api.project.completedProject.useMutation();
   const combinedSchema = CreateProjectSchema.merge(
     UpdateProjectSchema.partial(),
   );
@@ -137,19 +138,19 @@ function Index() {
 
   const handleStatusChange = (statusValue: ProjectStatus) => {
     const newSelectedStatuses = selectedStatuses.includes(statusValue)
-      ? selectedStatuses.filter(s => s !== statusValue)
+      ? selectedStatuses.filter((s) => s !== statusValue)
       : [...selectedStatuses, statusValue];
-    
+
     setSelectedStatuses(newSelectedStatuses);
-    
+
     // Update URL
     const params = new URLSearchParams(searchParams.toString());
     if (newSelectedStatuses.length > 0) {
-      params.set('status', newSelectedStatuses.join(','));
+      params.set("status", newSelectedStatuses.join(","));
     } else {
-      params.delete('status');
+      params.delete("status");
     }
-    
+
     router.push(`?${params.toString()}`);
     setCurrentPage(1);
     void refetch();
@@ -253,8 +254,8 @@ function Index() {
       modals.openConfirmModal({
         title: (
           <span>
-            ยินยันที่จะโครงการ <Badge color="blue">{projectData.name}</Badge>{" "}
-            ใช่หรือไม่ ?
+            ยินยันที่จะ<span className="font-bold text-red-700">ลบ</span>โครงการ{" "}
+            <Badge color="blue">{projectData.name}</Badge> ใช่หรือไม่ ?
           </span>
         ),
         children: (
@@ -275,6 +276,115 @@ function Index() {
             },
             onError: (error) => {
               toast.error("ลบโครงการไม่สำเร็จ", {
+                id: idToast,
+                description: error.message,
+              });
+            },
+          });
+        },
+      });
+    } catch (error) {}
+  };
+
+  const onResentProject = (projectData: ColumnType) => {
+    try {
+      modals.openConfirmModal({
+        title: (
+          <span>
+            ยินยันที่จะเสนอโครงการ{" "}
+            <Badge color="blue">{projectData.name}</Badge> อีกครั้งใช่หรือไม่ ?
+          </span>
+        ),
+        // children: (
+        //   <span className="text-sm">
+        //     การดำเนินการนี้จะทำการลบข้อมูลสำคัญอย่างถาวร
+        //     และไม่สามารถนำกลับมาได้อีก
+        //   </span>
+        // ),
+        labels: { confirm: "ยืนยัน", cancel: "ยกเลิก" },
+        confirmProps: { color: "green" },
+        onCancel: () => console.log("Cancel"),
+        onConfirm: () => {
+          const idToast = toast.loading("กำลังดำเนินการ...");
+          resentProjectApi.mutate(projectData.id, {
+            onSuccess: () => {
+              toast.success("ดำเนินการสำเร็จ", { id: idToast });
+              void refetch();
+            },
+            onError: (error) => {
+              toast.error("ดำเนินการไม่สำเร็จ", {
+                id: idToast,
+                description: error.message,
+              });
+            },
+          });
+        },
+      });
+    } catch (error) {}
+  };
+  const onCancelProject = (projectData: ColumnType) => {
+    try {
+      modals.openConfirmModal({
+        title: (
+          <span>
+            ยินยันที่จะยกเลิกโครงการ{" "}
+            <Badge color="blue">{projectData.name}</Badge> ใช่หรือไม่ ?
+          </span>
+        ),
+        // children: (
+        //   <span className="text-sm">
+        //     การดำเนินการนี้จะทำการลบข้อมูลสำคัญอย่างถาวร
+        //     และไม่สามารถนำกลับมาได้อีก
+        //   </span>
+        // ),
+        labels: { confirm: "ยืนยัน", cancel: "ยกเลิก" },
+        confirmProps: { color: "red" },
+        onCancel: () => console.log("Cancel"),
+        onConfirm: () => {
+          const idToast = toast.loading("กำลังดำเนินการ...");
+          cancelProjectApi.mutate(projectData.id, {
+            onSuccess: () => {
+              toast.success("ดำเนินการสำเร็จ", { id: idToast });
+              void refetch();
+            },
+            onError: (error) => {
+              toast.error("ดำเนินการไม่สำเร็จ", {
+                id: idToast,
+                description: error.message,
+              });
+            },
+          });
+        },
+      });
+    } catch (error) {}
+  };
+  const onCompletedProject = (projectData: ColumnType) => {
+    try {
+      modals.openConfirmModal({
+        title: (
+          <span>
+            ยินยันที่จะเสร็จสิ้นโครงการ{" "}
+            <Badge color="blue">{projectData.name}</Badge> ใช่หรือไม่ ?
+          </span>
+        ),
+        // children: (
+        //   <span className="text-sm">
+        //     การดำเนินการนี้จะทำการลบข้อมูลสำคัญอย่างถาวร
+        //     และไม่สามารถนำกลับมาได้อีก
+        //   </span>
+        // ),
+        labels: { confirm: "ยืนยัน", cancel: "ยกเลิก" },
+        confirmProps: { color: "green" },
+        onCancel: () => console.log("Cancel"),
+        onConfirm: () => {
+          const idToast = toast.loading("กำลังดำเนินการ...");
+          completedProjectApi.mutate(projectData.id, {
+            onSuccess: () => {
+              toast.success("ดำเนินการสำเร็จ", { id: idToast });
+              void refetch();
+            },
+            onError: (error) => {
+              toast.error("ดำเนินการไม่สำเร็จ", {
                 id: idToast,
                 description: error.message,
               });
@@ -589,30 +699,121 @@ function Index() {
                     {
                       title: "ดำเนินการ",
                       render: (_, r: ColumnType) => (
-                        <Group align="center">
-                          <Button
-                            variant="filled"
-                            leftSection={
-                              <IconEdit size={"1rem"} stroke={1.5} />
-                            }
-                            color="blue"
-                            size="xs"
-                            onClick={() => handleOnClickEdit(r.id)}
-                          >
-                            แก้ไข
-                          </Button>
-                          <Button
-                            variant="filled"
-                            leftSection={
-                              <IconTrash size={"1rem"} stroke={1.5} />
-                            }
-                            color="red"
-                            size="xs"
-                            onClick={() => onDelete(r)}
-                          >
-                            ลบ
-                          </Button>
-                        </Group>
+                        <Popover
+                          width={200}
+                          position="bottom"
+                          withArrow
+                          shadow="md"
+                        >
+                          <Popover.Target>
+                            <Button size="sm" color="blue">
+                              ดำเนินการ
+                            </Button>
+                          </Popover.Target>
+                          <Popover.Dropdown>
+                            <div className="flex flex-col gap-2">
+                              {r.project_status === ProjectStatus.REJECT ||
+                                (r.project_status ===
+                                  ProjectStatus.CANCELED && (
+                                  <>
+                                    <Button
+                                      variant="filled"
+                                      leftSection={
+                                        <IconReload
+                                          size={"1rem"}
+                                          stroke={1.5}
+                                        />
+                                      }
+                                      color="blue"
+                                      size="xs"
+                                      onClick={() => onResentProject(r)}
+                                    >
+                                      เสนอโครงการอีกครั้ง
+                                    </Button>
+                                  </>
+                                ))}
+                              {r.project_status ===
+                                ProjectStatus.IN_PROGRESS && (
+                                <Button
+                                  variant="filled"
+                                  leftSection={
+                                    <IconCheckbox size={"1rem"} stroke={1.5} />
+                                  }
+                                  color="green"
+                                  size="xs"
+                                  onClick={() => onCompletedProject(r)}
+                                >
+                                  โครงการเสร็จสิ้น
+                                </Button>
+                              )}
+                              {r.project_status !== ProjectStatus.COMPLETED && (
+                                <>
+                                  {r.project_status !==
+                                    ProjectStatus.CANCELED && (
+                                    <Button
+                                      variant="filled"
+                                      leftSection={
+                                        <IconX size={"1rem"} stroke={1.5} />
+                                      }
+                                      color="red"
+                                      size="xs"
+                                      onClick={() => onCancelProject(r)}
+                                    >
+                                      ยกเลิกโครงการ
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="filled"
+                                    leftSection={
+                                      <IconEdit size={"1rem"} stroke={1.5} />
+                                    }
+                                    color="yellow"
+                                    size="xs"
+                                    onClick={() => handleOnClickEdit(r.id)}
+                                  >
+                                    แก้ไข
+                                  </Button>
+                                  <Button
+                                    variant="filled"
+                                    leftSection={
+                                      <IconTrash size={"1rem"} stroke={1.5} />
+                                    }
+                                    color="red"
+                                    size="xs"
+                                    onClick={() => onDelete(r)}
+                                  >
+                                    ลบ
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </Popover.Dropdown>
+                        </Popover>
+                        // <Group align="center">
+                        //   {}
+                        //   <Button
+                        //     variant="filled"
+                        //     leftSection={
+                        //       <IconEdit size={"1rem"} stroke={1.5} />
+                        //     }
+                        //     color="blue"
+                        //     size="xs"
+                        //     onClick={() => handleOnClickEdit(r.id)}
+                        //   >
+                        //     แก้ไข
+                        //   </Button>
+                        //   <Button
+                        //     variant="filled"
+                        //     leftSection={
+                        //       <IconTrash size={"1rem"} stroke={1.5} />
+                        //     }
+                        //     color="red"
+                        //     size="xs"
+                        //     onClick={() => onDelete(r)}
+                        //   >
+                        //     ลบ
+                        //   </Button>
+                        // </Group>
                       ),
                     },
                   ]

@@ -133,3 +133,59 @@ export const rejectProject = am
       }
     }
   });
+export const resentProject = pt
+  .input(z.string())
+  .mutation(async ({ ctx, input }) => {
+    try {
+      return await ctx.db.project.update({
+        where: {
+          id: input,
+        },
+        data: {
+          project_status: ProjectStatus.PENDING
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+    }
+  });
+export const cancelProject = pt
+  .input(z.string())
+  .mutation(async ({ ctx, input }) => {
+    try {
+      return await ctx.db.project.update({
+        where: {
+          id: input,
+        },
+        data: {
+          project_status: ProjectStatus.CANCELED
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+    }
+  });
+export const completedProject = pt
+  .input(z.string())
+  .mutation(async ({ ctx, input }) => {
+    try {
+      return await ctx.db.project.update({
+        where: {
+          id: input,
+        },
+        data: {
+          project_status: ProjectStatus.COMPLETED
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+    }
+  });
+
+  

@@ -259,7 +259,7 @@ function Index() {
       modals.openConfirmModal({
         title: (
           <span>
-            ยินยันที่จะลบโครงการ <Badge color="blue">{projectData.name}</Badge>{" "}
+            ยินยันที่จะ<span className="font-bold text-red-700">ลบ</span>โครงการ <Badge color="blue">{projectData.name}</Badge>{" "}
             ใช่หรือไม่ ?
           </span>
         ),
