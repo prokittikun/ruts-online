@@ -120,11 +120,11 @@ export const authOptions: NextAuthOptions = {
           }
 
           return {
-            id: user.id as string,
-            email: user.email as string,
+            id: user.id,
+            email: user.email,
             firstName: user.first_name ?? "",
             lastName: user.last_name ?? "",
-            role: user.role as Role,
+            role: user.role,
           };
         } catch (err) {
           throw err;

@@ -698,7 +698,7 @@ function Index() {
                 ? [
                     {
                       title: "ดำเนินการ",
-                      render: (_, r: ColumnType) => (
+                      render: (_: any, r: ColumnType) => (
                         <Popover
                           width={200}
                           position="bottom"

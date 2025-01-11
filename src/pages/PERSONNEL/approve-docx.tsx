@@ -14,11 +14,12 @@ function ApproveDocx() {
           initialDoc: "/webviewer/1.docx",
           enableOfficeEditing: true,
         },
-        viewer.current,
-      ).then((instance) => {
-        const { docViewer } = instance;
-        // you can now call WebViewer APIs here...
-      });
+        viewer.current!,
+      )
+      // .then((instance) => {
+      //   const { docViewer } = instance;
+      //   // you can now call WebViewer APIs here...
+      // });
     };
 
     initWebViewer();

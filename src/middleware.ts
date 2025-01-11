@@ -7,16 +7,12 @@ const urlRoleCanAccess: {
   role: Role[];
 }[] = [
   {
-    startPath: "/STUDENT",
-    role: ["STUDENT"],
+    startPath: "/PERSONNEL",
+    role: ["PERSONNEL"],
   },
   {
     startPath: "/ADMIN",
     role: ["ADMIN"],
-  },
-  {
-    startPath: "/PROFESSOR",
-    role: ["PROFESSOR"],
   },
 ];
 
@@ -55,9 +51,5 @@ export default withAuth(
 );
 
 export const config = {
-  matcher: [
-    "/STUDENT/:path*",
-    "/PROFESSOR/:path*",
-    "/ADMIN/:path*",
-  ],
+  matcher: ["/ADMIN/:path*"],
 };
