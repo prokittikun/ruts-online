@@ -228,6 +228,16 @@ function Index() {
     }
   };
 
+  const onDownload = async (url: string, name: string) => {
+    const link = document.createElement("a");
+    link.href = url ?? "";
+    link.target = "_blank";
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+  
   const handleOnClickEdit = (projectId: string) => {
     setIsEditMode(true);
     setEditingProjectId(projectId);
@@ -525,10 +535,11 @@ function Index() {
                   // setIsEditMode(false);
                   // reset();
                   // open();
-                  navigate.push("/PERSONNEL/approve-docx");
+                  // navigate.push("/PERSONNEL/approve-docx");
+                  onDownload(`${process.env.NEXTAUTH_URL}/webviewer/1.docx`, "แบบเสนอขออนุมัติโครงการ.docx");
                 }}
               >
-                สร้างแบบเสนอขออนุมัติโครงการ
+                ดาวน์โหลดแบบเสนอขออนุมัติโครงการ
               </Button>
               <Button
                 size="md"
@@ -539,10 +550,11 @@ function Index() {
                   // setIsEditMode(false);
                   // reset();
                   // open();
-                  navigate.push("/PERSONNEL/support-budget-docx");
+                  onDownload(`${process.env.NEXTAUTH_URL}/webviewer/2.docx`, "แบบเสนอขอเงินสนับสนุนโครงการ.docx");
+                  // navigate.push("/PERSONNEL/support-budget-docx");
                 }}
               >
-                สร้างแบบเสนอขอเงินสนับสนุนโครงการ
+                ดาวน์โหลดแบบเสนอขอเงินสนับสนุนโครงการ
               </Button>
               <Button
                 size="md"
