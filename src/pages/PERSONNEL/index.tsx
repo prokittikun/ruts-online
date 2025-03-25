@@ -38,6 +38,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useDebounceCallback } from "usehooks-ts";
+import CreateProjectModal from "@/components/CreateProjectModal";
 // export const getServerSideProps: GetServerSideProps = async (ctx) => {
 //   // const token = await getToken({
 //   //     req: ctx.req,
@@ -93,7 +94,6 @@ function Index() {
     }
   }, [searchParams]);
 
-  const createProjectApi = api.project.createProject.useMutation();
   const {
     data: getAllProjectData,
     isLoading,
@@ -104,37 +104,10 @@ function Index() {
     keyword: searchValue,
     status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
   });
-
-  const getProjectTypeApi = api.project.getProjectType.useQuery(undefined, {
-    enabled: !!opened,
-  });
-  const projectTypeOptions = getProjectTypeApi.data?.map((type) => ({
-    label: type.name,
-    value: type.id,
-  }));
-  const updateProjectApi = api.project.updateProject.useMutation();
   const deleteProjectApi = api.project.deleteProject.useMutation();
-  const getProjectByIdApi = api.project.getProjectById.useMutation();
   const resentProjectApi = api.project.resentProject.useMutation();
   const cancelProjectApi = api.project.cancelProject.useMutation();
   const completedProjectApi = api.project.completedProject.useMutation();
-  const combinedSchema = CreateProjectSchema.merge(
-    UpdateProjectSchema.partial(),
-  );
-
-  type ProjectFormData = ICreateProject & Partial<IUpdateProject>;
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    control,
-    reset,
-  } = useForm<ProjectFormData>({
-    resolver: zodResolver(combinedSchema),
-  });
 
   const handleStatusChange = (statusValue: ProjectStatus) => {
     const newSelectedStatuses = selectedStatuses.includes(statusValue)
@@ -171,82 +144,14 @@ function Index() {
     </div>
   );
 
-  const onSubmit = (data: ProjectFormData) => {
-    try {
-      console.log(data);
-
-      const idToast = toast.loading(
-        isEditMode ? "กำลังอัพเดตโครงการ..." : "กำลังสร้างโครงการ...",
-      );
-
-      if (isEditMode && editingProjectId) {
-        // Update operation
-        const updateData: IUpdateProject = {
-          ...data,
-          id: editingProjectId, // Add the ID for update
-        };
-
-        updateProjectApi.mutate(updateData, {
-          onSuccess: () => {
-            toast.success("อัพเดตโครงการสำเร็จ", { id: idToast });
-            close();
-            reset();
-            setIsEditMode(false);
-            setEditingProjectId(null);
-            void refetch();
-          },
-          onError: (error) => {
-            toast.error("อัพเดตโครงการไม่สำเร็จ", {
-              id: idToast,
-              description: error.message,
-            });
-          },
-        });
-      } else {
-        // Create operation
-        const createData: ICreateProject = data;
-
-        createProjectApi.mutate(createData, {
-          onSuccess: () => {
-            toast.success("สร้างโครงการสำเร็จ", { id: idToast });
-            close();
-            reset();
-            void refetch();
-          },
-          onError: (error) => {
-            toast.error("สร้างโครงการไม่สำเร็จ", {
-              id: idToast,
-              description: error.message,
-            });
-          },
-        });
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error("เกิดข้อผิดพลาด", { description: error.message });
-      }
-    }
-  };
-
-  const handleOnClickEdit = (projectId: string) => {
-    setIsEditMode(true);
-    setEditingProjectId(projectId);
-    //init form from getProjectByIdApi useQuery
-    getProjectByIdApi.mutate(projectId, {
-      onSuccess: (data) => {
-        if (data) {
-          // Populate form with existing equipment data
-          setValue("name", data.name);
-          setValue("detail", data.detail);
-          setValue("location", data.location ?? "");
-          setValue("project_budget", data.project_budget);
-          setValue("typeId", data.project_type.id);
-          setValue("date_start_the_project", data.date_start_the_project!);
-          setValue("date_end_the_project", data.date_end_the_project!);
-          open(); // Open drawer
-        }
-      },
-    });
+  const onDownload = async (url: string, name: string) => {
+    const link = document.createElement("a");
+    link.href = url ?? "";
+    link.target = "_blank";
+    link.download = name;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   const onDelete = (projectData: ColumnType) => {
@@ -409,108 +314,15 @@ function Index() {
     : never;
   return (
     <>
-      <Modal
+      <CreateProjectModal
         opened={opened}
-        onClose={close}
-        size={"70%"}
-        title={isEditMode ? "แก้ไขโครงการ" : "เพิ่มโครงการ"}
-      >
-        <form className="flex flex-col gap-5" onSubmit={handleSubmit(onSubmit)}>
-          <ItemStructure title="ชื่อโครงการ" required mode="vertical">
-            <ControlledInput
-              // postfix="คน"
-              required
-              // type="string"
-              // title="ชื่อครุภัณฑ์"
-              placeholder="ระบุชื่อโครงการ"
-              name="name"
-              control={control}
-            />
-          </ItemStructure>
-          <ItemStructure title="รายละเอียดโครงการ" required mode="vertical">
-            <ControlledInput
-              // postfix="คน"
-              required
-              // type="string"
-              // title="ชื่อครุภัณฑ์"
-              placeholder="ระบุรายละเอียดของโครงการ"
-              name="detail"
-              control={control}
-            />
-          </ItemStructure>
-          <ItemStructure title="สถานที่จัดโครงการ" required mode="vertical">
-            <ControlledInput
-              // postfix="คน"
-              required
-              // type="string"
-              // title="ชื่อครุภัณฑ์"
-              placeholder="ระบุสถานที่จัดโครงการ"
-              name="location"
-              control={control}
-            />
-          </ItemStructure>
-          <ItemStructure title="งบประมาณโครงการ" required mode="vertical">
-            <ControlledInputNumber
-              // postfix="คน"
-              required
-              // type="string"
-              // title="ชื่อครุภัณฑ์"
-              placeholder="ระบุงบประมาณโครงการที่ต้องการ"
-              name="project_budget"
-              control={control}
-            />
-          </ItemStructure>
-          <ItemStructure title="ประเภทโครงการ" required mode="vertical">
-            {/* <Select
-              placeholder="เลือกประเภทโครงการ"
-              data={projectTypeOptions}
-            /> */}
-            <ControlledSelect
-              className="w-full"
-              placeholder="เลือกประเภทโครงการ"
-              option={projectTypeOptions}
-              // checkIconPosition="right"
-              // searchable
-              control={control}
-              name="typeId"
-            />
-            {/* <ControlledInputNumber
-              // postfix="คน"
-              required
-              // type="string"
-              // title="ชื่อครุภัณฑ์"
-              placeholder="เลือกประเภทโครงการ"
-              name="typeId"
-              control={control}
-            /> */}
-          </ItemStructure>
-          <ItemStructure
-            title="วันเดือนปีที่เริ่มโครงการ"
-            required
-            mode="vertical"
-          >
-            <ControlledDatePicker
-              placeholder="กรุณาเลือกวันเดือนปีที่เริ่มโครงการ"
-              name="date_start_the_project"
-              control={control}
-            />
-          </ItemStructure>
-          <ItemStructure
-            title="วันเดือนปีที่สิ้นสุดโครงการ"
-            required
-            mode="vertical"
-          >
-            <ControlledDatePicker
-              placeholder="กรุณาเลือกวันเดือนปีที่สิ้นสุดโครงการ"
-              name="date_end_the_project"
-              control={control}
-            />
-          </ItemStructure>
-          <Button color="blue" leftSection={<Plus />} type="submit">
-            บันทึก
-          </Button>
-        </form>
-      </Modal>
+        close={close}
+        refetch={refetch}
+        isEditMode={isEditMode}
+        setIsEditMode={setIsEditMode}
+        editingProjectId={editingProjectId}
+        setEditingProjectId={setEditingProjectId}
+      />
       <div className="flex flex-col gap-5">
         <div className="flex w-full items-center justify-between">
           <span className="text-2xl font-bold">โครงการทั้งหมด</span>
@@ -525,10 +337,14 @@ function Index() {
                   // setIsEditMode(false);
                   // reset();
                   // open();
-                  navigate.push("/PERSONNEL/approve-docx");
+                  // navigate.push("/PERSONNEL/approve-docx");
+                  onDownload(
+                    `${process.env.NEXTAUTH_URL}/webviewer/1.docx`,
+                    "แบบเสนอขออนุมัติโครงการ.docx",
+                  );
                 }}
               >
-                สร้างแบบเสนอขออนุมัติโครงการ
+                ดาวน์โหลดแบบเสนอขออนุมัติโครงการ
               </Button>
               <Button
                 size="md"
@@ -539,10 +355,14 @@ function Index() {
                   // setIsEditMode(false);
                   // reset();
                   // open();
-                  navigate.push("/PERSONNEL/support-budget-docx");
+                  onDownload(
+                    `${process.env.NEXTAUTH_URL}/webviewer/2.docx`,
+                    "แบบเสนอขอเงินสนับสนุนโครงการ.docx",
+                  );
+                  // navigate.push("/PERSONNEL/support-budget-docx");
                 }}
               >
-                สร้างแบบเสนอขอเงินสนับสนุนโครงการ
+                ดาวน์โหลดแบบเสนอขอเงินสนับสนุนโครงการ
               </Button>
               <Button
                 size="md"
@@ -551,7 +371,7 @@ function Index() {
                 onClick={() => {
                   setEditingProjectId(null);
                   setIsEditMode(false);
-                  reset();
+                  // reset();
                   open();
                 }}
               >
@@ -769,7 +589,11 @@ function Index() {
                                     }
                                     color="yellow"
                                     size="xs"
-                                    onClick={() => handleOnClickEdit(r.id)}
+                                    onClick={() => {
+                                      setEditingProjectId(r.id);
+                                      setIsEditMode(true);
+                                      open();
+                                    }}
                                   >
                                     แก้ไข
                                   </Button>

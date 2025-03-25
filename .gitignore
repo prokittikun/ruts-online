@@ -47,4 +47,5 @@ yarn-error.log*
 
 
 /public/webviewer/*
+/public/uploads/*
 !/public/webviewer/*.docx
