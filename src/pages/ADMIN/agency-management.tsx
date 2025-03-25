@@ -238,7 +238,7 @@ function AgencyManagement() {
               control={control}
             />
           </ItemStructure>
-          <ItemStructure required title="ที่อยู่อีเมล" required mode="vertical">
+          <ItemStructure  title="ที่อยู่อีเมล" mode="vertical" required>
             <ControlledInput
               // postfix="คน"
               required
