@@ -1,5 +1,11 @@
-import { CreateProjectSchema } from "@/schemas/projects/createProject";
-import { UpdateProjectSchema } from "@/schemas/projects/updateProject";
+import {
+  CreateProjectSchema,
+  createProjectTypeSchema,
+} from "@/schemas/projects/createProject";
+import {
+  UpdateProjectSchema,
+  UpdateProjectTypeSchema,
+} from "@/schemas/projects/updateProject";
 import {
   adminProcedure,
   protectedProcedure,
@@ -24,6 +30,12 @@ export const createProject = pt
         location,
         project_expenses = 0,
         project_budget,
+        participatingAgencies,
+        areaId,
+        personnelId,
+        indicators,
+        approvalProjectFilePath,
+        supportProjectFilePath,
       } = input;
       return await ctx.db.project.create({
         data: {
@@ -45,6 +57,39 @@ export const createProject = pt
               id: typeId,
             },
           },
+          Area: {
+            connect: {
+              id: areaId,
+            },
+          },
+          Personnel: {
+            connect: {
+              id: personnelId,
+            },
+          },
+          Participating_agencies: {
+            create: participatingAgencies.map((agencyId) => ({
+              agency: {
+                connect: {
+                  id: agencyId,
+                },
+              },
+              assignedAt: new Date(),
+              assignedBy: ctx.session.user.id, // Assuming the user assigns the agency
+            })),
+          },
+          Assemble: {
+            create: indicators.map((indicatorId) => ({
+              name: "",
+              indicator: {
+                connect: {
+                  id: indicatorId,
+                },
+              },
+            })),
+          },
+          approvalProjectFilePath: approvalProjectFilePath,
+          supportProjectFilePath: supportProjectFilePath,
         },
       });
     } catch (error) {
@@ -105,7 +150,7 @@ export const approveProject = am
           id: input,
         },
         data: {
-          project_status: ProjectStatus.IN_PROGRESS
+          project_status: ProjectStatus.IN_PROGRESS,
         },
       });
     } catch (error) {
@@ -124,7 +169,7 @@ export const rejectProject = am
           id: input,
         },
         data: {
-          project_status: ProjectStatus.REJECT
+          project_status: ProjectStatus.REJECT,
         },
       });
     } catch (error) {
@@ -142,7 +187,7 @@ export const resentProject = pt
           id: input,
         },
         data: {
-          project_status: ProjectStatus.PENDING
+          project_status: ProjectStatus.PENDING,
         },
       });
     } catch (error) {
@@ -160,7 +205,7 @@ export const cancelProject = pt
           id: input,
         },
         data: {
-          project_status: ProjectStatus.CANCELED
+          project_status: ProjectStatus.CANCELED,
         },
       });
     } catch (error) {
@@ -178,7 +223,7 @@ export const completedProject = pt
           id: input,
         },
         data: {
-          project_status: ProjectStatus.COMPLETED
+          project_status: ProjectStatus.COMPLETED,
         },
       });
     } catch (error) {
@@ -188,4 +233,37 @@ export const completedProject = pt
     }
   });
 
-  
+export const createProjectType = am
+  .input(createProjectTypeSchema)
+  .mutation(async ({ ctx, input }) => {
+    try {
+      return await ctx.db.projectType.create({
+        data: {
+          name: input.name,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+    }
+  });
+
+export const updateProjectType = am
+  .input(UpdateProjectTypeSchema)
+  .mutation(async ({ ctx, input }) => {
+    try {
+      return await ctx.db.projectType.update({
+        where: {
+          id: input.id,
+        },
+        data: {
+          name: input.name,
+        },
+      });
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+    }
+  });

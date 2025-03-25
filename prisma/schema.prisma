@@ -33,12 +33,20 @@ enum Role {
 }
 
 model Personnel {
-    id      String    @id @default(uuid())
-    name    String
-    email   String
-    tel     String
-    address String
-    project Project[]
+    id           String      @id @default(uuid())
+    name         String
+    email        String
+    tel          String
+    address      String
+    project      Project[]
+    Department   Department? @relation(fields: [departmentId], references: [id])
+    departmentId String?
+}
+
+model Department {
+    id        String      @id @default(uuid())
+    name      String
+    personnel Personnel[]
 }
 
 model Area {
@@ -59,26 +67,29 @@ model Agency {
 }
 
 model Project {
-    id                     String                   @id @default(uuid())
-    name                   String
-    detail                 String
-    date_start_the_project DateTime?
-    date_end_the_project   DateTime?
-    location               String?
-    type                   String
-    project_expenses       Int
-    project_budget         Int
-    project_owner          String
-    project_status         ProjectStatus
-    user                   User                     @relation(fields: [project_owner], references: [id], onDelete: Cascade)
-    project_type           ProjectType              @relation(fields: [type], references: [id], onDelete: Cascade)
-    createdAt              DateTime                 @default(now())
-    updatedAt              DateTime                 @updatedAt
-    Area                   Area?                    @relation(fields: [areaId], references: [id])
-    areaId                 String?
-    Personnel              Personnel?               @relation(fields: [personnelId], references: [id])
-    personnelId            String?
-    Participating_agencies Participating_agencies[]
+    id                      String                   @id @default(uuid())
+    name                    String
+    detail                  String
+    date_start_the_project  DateTime?
+    date_end_the_project    DateTime?
+    location                String?
+    type                    String
+    project_expenses        Int
+    project_budget          Int
+    project_owner           String
+    project_status          ProjectStatus
+    user                    User                     @relation(fields: [project_owner], references: [id], onDelete: Cascade)
+    project_type            ProjectType              @relation(fields: [type], references: [id], onDelete: Cascade)
+    createdAt               DateTime                 @default(now())
+    updatedAt               DateTime                 @updatedAt
+    Area                    Area?                    @relation(fields: [areaId], references: [id])
+    areaId                  String?
+    Personnel               Personnel?               @relation(fields: [personnelId], references: [id])
+    personnelId             String?
+    Participating_agencies  Participating_agencies[]
+    Assemble                Assemble[]
+    approvalProjectFilePath String?
+    supportProjectFilePath  String?
 }
 
 model Participating_agencies {
@@ -93,9 +104,18 @@ model Participating_agencies {
 }
 
 model Indicators {
-    id      String    @id @default(uuid())
-    name    String
-    value   Int
+    id       String     @id @default(uuid())
+    name     String
+    assemble Assemble[]
+}
+
+model Assemble {
+    id          String     @id @default(uuid())
+    name        String
+    project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId   String
+    indicator   Indicators @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
+    indicatorId String
 }
 
 enum ProjectStatus {

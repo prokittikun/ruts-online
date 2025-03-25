@@ -1,19 +1,21 @@
+import { CreateIndicatorSchema } from "@/schemas/indicator/createIndicator";
+import { UpdateIndicatorSchema } from "@/schemas/indicator/updateIndicator";
 import {
   adminProcedure,
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
-import { z } from "zod";
 const pt = protectedProcedure;
 const pb = publicProcedure;
 const am = adminProcedure;
-export const deleteProject = pt
-  .input(z.string())
+
+export const createIndicator = am
+  .input(CreateIndicatorSchema)
   .mutation(async ({ ctx, input }) => {
     try {
-      return await ctx.db.project.delete({
-        where: {
-          id: input,
+      return await ctx.db.indicators.create({
+        data: {
+          name: input.name,
         },
       });
     } catch (error) {
@@ -23,13 +25,16 @@ export const deleteProject = pt
     }
   });
 
-export const deleteProjectType = am
-  .input(z.string())
+export const updateIndicator = am
+  .input(UpdateIndicatorSchema)
   .mutation(async ({ ctx, input }) => {
     try {
-      return await ctx.db.projectType.delete({
+      return await ctx.db.indicators.update({
         where: {
-          id: input,
+          id: input.id,
+        },
+        data: {
+          name: input.name,
         },
       });
     } catch (error) {

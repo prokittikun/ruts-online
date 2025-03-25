@@ -19,7 +19,9 @@ import { ControlledInput } from "./Controlled";
 import ControlledSelect from "./ControlledSelect";
 import ControlledInputNumber from "./ControlledInputNumber";
 import ControlledDatePicker from "./ControlledDatePicker";
+import ControlledMultiSelect from "./ControlledMultiSelect";
 import { Plus } from "lucide-react";
+import UploadProjectFile from "./UploadProjectFile";
 
 interface Props {
   opened: boolean;
@@ -40,6 +42,11 @@ function CreateProjectModal({
   editingProjectId,
   setEditingProjectId,
 }: Props) {
+  const [approvalProjectFilePath, setApprovalProjectFilePath] =
+    useState<string>("");
+  const [supportProjectFilePath, setSupportProjectFilePath] =
+    useState<string>("");
+
   const createProjectApi = api.project.createProject.useMutation();
 
   const updateProjectApi = api.project.updateProject.useMutation();
@@ -53,6 +60,18 @@ function CreateProjectModal({
     enabled: !!opened,
   });
 
+  const getAllPersonnelApi = api.personnel.getAllPersonnel.useQuery(undefined, {
+    enabled: !!opened,
+  });
+
+  const getAllAgencyApi = api.agency.getAllAgency.useQuery(undefined, {
+    enabled: !!opened,
+  });
+
+  const getAllIndicatorApi = api.indicator.getAllIndicator.useQuery(undefined, {
+    enabled: !!opened,
+  });
+
   const projectTypeOptions = getProjectTypeApi.data?.map((type) => ({
     label: type.name,
     value: type.id,
@@ -62,6 +81,22 @@ function CreateProjectModal({
     label: area.name,
     value: area.id,
   }));
+
+  const personnelOptions = getAllPersonnelApi.data?.map((person) => ({
+    label: person.name,
+    value: person.id,
+  }));
+
+  const agencyOptions = getAllAgencyApi.data?.map((agency) => ({
+    label: agency.name,
+    value: agency.id,
+  }));
+
+  const indicatorOptions = getAllIndicatorApi.data?.map((indicator) => ({
+    label: indicator.name,
+    value: indicator.id,
+  }));
+
   const combinedSchema = CreateProjectSchema.merge(
     UpdateProjectSchema.partial(),
   );
@@ -79,6 +114,18 @@ function CreateProjectModal({
   } = useForm<ProjectFormData>({
     resolver: zodResolver(combinedSchema),
   });
+
+  useEffect(() => {
+    if (approvalProjectFilePath) {
+      setValue("approvalProjectFilePath", approvalProjectFilePath);
+    }
+  }, [approvalProjectFilePath, setValue]);
+
+  useEffect(() => {
+    if (supportProjectFilePath) {
+      setValue("supportProjectFilePath", supportProjectFilePath);
+    }
+  }, [supportProjectFilePath, setValue]);
 
   useEffect(() => {
     if (opened && !isEditMode) {
@@ -193,6 +240,18 @@ function CreateProjectModal({
               control={control}
             />
           </ItemStructure>
+          <ItemStructure title="เจ้าของโครงการ" required mode="vertical">
+            <ControlledSelect
+              className="w-full"
+              placeholder="เลือกเจ้าของโครงการ"
+              option={personnelOptions}
+              searchable
+              // checkIconPosition="right"
+              // searchable
+              control={control}
+              name="personnelId"
+            />
+          </ItemStructure>
           <ItemStructure title="สถานที่จัดโครงการ" required mode="vertical">
             {/* <ControlledInput
                   // postfix="คน"
@@ -208,9 +267,9 @@ function CreateProjectModal({
               placeholder="เลือกสถานที่จัดโครงการ"
               option={areaOptions}
               // checkIconPosition="right"
-              // searchable
+              searchable
               control={control}
-              name="typeId"
+              name="areaId"
             />
           </ItemStructure>
           <ItemStructure
@@ -251,17 +310,56 @@ function CreateProjectModal({
               // checkIconPosition="right"
               // searchable
               control={control}
+              searchable
               name="typeId"
             />
-            {/* <ControlledInputNumber
-                  // postfix="คน"
-                  required
-                  // type="string"
-                  // title="ชื่อครุภัณฑ์"
+          </ItemStructure>
+          <ItemStructure title="ตัวชี้วัด" required mode="vertical">
+            {/* <Select
                   placeholder="เลือกประเภทโครงการ"
-                  name="typeId"
-                  control={control}
+                  data={projectTypeOptions}
                 /> */}
+            <ControlledMultiSelect
+              required
+              searchable
+              control={control}
+              name="indicators"
+              // label="เลือกตัวชี้วัด"
+              placeholder="เลือกตัวชี้วัด"
+              option={indicatorOptions}
+            />
+          </ItemStructure>
+          <ItemStructure title="หน่วยงาน" required mode="vertical">
+            {/* <Select
+                  placeholder="เลือกประเภทโครงการ"
+                  data={projectTypeOptions}
+                /> */}
+            <ControlledMultiSelect
+              // className="w-full"
+              placeholder="เลือกหน่วยงาน"
+              option={agencyOptions}
+              // checkIconPosition="right"
+              // searchable
+              control={control}
+              searchable
+              name="participatingAgencies"
+            />
+          </ItemStructure>
+          <ItemStructure title="ประเภทโครงการ" required mode="vertical">
+            {/* <Select
+                  placeholder="เลือกประเภทโครงการ"
+                  data={projectTypeOptions}
+                /> */}
+            <ControlledSelect
+              className="w-full"
+              placeholder="เลือกประเภทโครงการ"
+              option={projectTypeOptions}
+              // checkIconPosition="right"
+              // searchable
+              control={control}
+              searchable
+              name="typeId"
+            />
           </ItemStructure>
           <ItemStructure
             title="วันเดือนปีที่เริ่มโครงการ"
@@ -285,7 +383,10 @@ function CreateProjectModal({
               control={control}
             />
           </ItemStructure>
-         
+          <UploadProjectFile
+            setApprovalProjectFilePath={setApprovalProjectFilePath}
+            setSupportProjectFilePath={setSupportProjectFilePath}
+          />
           <Button color="blue" leftSection={<Plus />} type="submit">
             บันทึก
           </Button>

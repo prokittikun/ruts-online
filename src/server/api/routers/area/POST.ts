@@ -1,19 +1,23 @@
+import { CreateAreaSchema } from "@/schemas/area/createArea";
+import { UpdateAreaSchema } from "@/schemas/area/updateArea";
 import {
   adminProcedure,
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
-import { z } from "zod";
 const pt = protectedProcedure;
 const pb = publicProcedure;
 const am = adminProcedure;
-export const deleteProject = pt
-  .input(z.string())
+
+export const createArea = am
+  .input(CreateAreaSchema)
   .mutation(async ({ ctx, input }) => {
     try {
-      return await ctx.db.project.delete({
-        where: {
-          id: input,
+      return await ctx.db.area.create({
+        data: {
+          name: input.name,
+          tel: input.tel,
+          address: input.address,
         },
       });
     } catch (error) {
@@ -23,13 +27,18 @@ export const deleteProject = pt
     }
   });
 
-export const deleteProjectType = am
-  .input(z.string())
+export const updateArea = am
+  .input(UpdateAreaSchema)
   .mutation(async ({ ctx, input }) => {
     try {
-      return await ctx.db.projectType.delete({
+      return await ctx.db.area.update({
         where: {
-          id: input,
+          id: input.id,
+        },
+        data: {
+          name: input.name,
+          tel: input.tel,
+          address: input.address,
         },
       });
     } catch (error) {

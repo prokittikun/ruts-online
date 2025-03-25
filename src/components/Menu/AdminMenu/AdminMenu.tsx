@@ -8,6 +8,13 @@ import {
   IconHome,
   IconUser,
   IconUserPlus,
+  IconDatabase,
+  IconBuildingSkyscraper,
+  IconTypography,
+  IconChartLine,
+  IconBuilding,
+  IconWorld,
+  IconPdf,
 } from "@tabler/icons-react";
 import classes from "./AdminMenu.module.css";
 import clsx from "clsx";
@@ -19,8 +26,15 @@ import Link from "next/link";
 const prefix = "/ADMIN";
 
 const data = [
-  { link: "", label: "โครงการทั้งหมด", icon: IconHome },
+  { link: "", label: "ข้อมูลโครงการ", icon: IconDatabase },
   { link: "/user-management", label: "เพิ่มผู้ใช้งาน", icon: IconUserPlus },
+  { link: "/personnel-management", label: "ข้อมูลบุคลากร", icon: IconUserPlus },
+  { link: "/department-management", label: "ข้อมูลสาขา", icon: IconBuilding },
+  { link: "/project-type-management", label: "ข้อมูลประเภทโครงการ", icon: IconTypography },
+  { link: "/indicator-management", label: "ข้อมูลตัวชี้วัด", icon: IconChartLine },
+  { link: "/agency-management", label: "ข้อมูลตัวหน่วยงาน", icon: IconBuildingSkyscraper },
+  { link: "/area-management", label: "ข้อมูลพื้นที่กำเนินการ", icon: IconWorld },
+  { link: "/pdf-management", label: "ออกรายงาน", icon: IconPdf },
 ];
 
 export function AdminMenu() {

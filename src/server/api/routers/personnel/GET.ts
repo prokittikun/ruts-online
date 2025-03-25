@@ -1,13 +1,11 @@
-import { CreateProjectSchema } from "@/schemas/projects/createProject";
-import { protectedProcedure, publicProcedure } from "@/server/api/trpc";
+import { publicProcedure } from "@/server/api/trpc";
 import paginationCalculator from "@/utils/paginationCalculator";
-import { ProjectStatus } from "@prisma/client";
 import { z } from "zod";
 const pb = publicProcedure;
 
-export const getAllArea = pb.query(async ({ ctx, input }) => {
+export const getAllPersonnel = pb.query(async ({ ctx, input }) => {
   try {
-    const result = await ctx.db.area.findMany();
+    const result = await ctx.db.personnel.findMany();
     return result;
   } catch (error) {
     if (error instanceof Error) {
@@ -16,7 +14,7 @@ export const getAllArea = pb.query(async ({ ctx, input }) => {
   }
 });
 
-export const getAllAreaPaginate = pb
+export const getAllPersonnelPaginate = pb
   .input(
     z.object({
       perPages: z.number(),
@@ -29,7 +27,7 @@ export const getAllAreaPaginate = pb
       console.log("input");
       const { perPages, currentPage, keyword } = input;
 
-      const totalItems = await ctx.db.area.count({
+      const totalItems = await ctx.db.personnel.count({
         where: {
           name: {
             contains: keyword ?? "",
@@ -42,7 +40,7 @@ export const getAllAreaPaginate = pb
         currentPage || 1,
       );
 
-      const result = await ctx.db.area.findMany({
+      const result = await ctx.db.personnel.findMany({
         where: {
           name: {
             contains: keyword ?? "",
@@ -50,6 +48,9 @@ export const getAllAreaPaginate = pb
         },
         skip: paginate.skips,
         take: paginate.limit,
+        include: {
+          Department: true,
+        }
         // orderBy: {
         //   createdAt: "desc",
         // },
@@ -70,11 +71,11 @@ export const getAllAreaPaginate = pb
     }
   });
 
-export const getAreaById = pb
+export const getPersonnelById = pb
   .input(z.string())
   .mutation(async ({ ctx, input }) => {
     try {
-      const result = await ctx.db.area.findUnique({
+      const result = await ctx.db.personnel.findUnique({
         where: {
           id: input,
         },
