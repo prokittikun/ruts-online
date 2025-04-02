@@ -114,18 +114,19 @@ function CreateProjectModal({
   } = useForm<ProjectFormData>({
     resolver: zodResolver(combinedSchema),
   });
+  const approvalProjectFilePathWatch = watch("approvalProjectFilePath");
 
   useEffect(() => {
     if (approvalProjectFilePath) {
       setValue("approvalProjectFilePath", approvalProjectFilePath);
     }
   }, [approvalProjectFilePath, setValue]);
-
-  useEffect(() => {
-    if (supportProjectFilePath) {
-      setValue("supportProjectFilePath", supportProjectFilePath);
-    }
-  }, [supportProjectFilePath, setValue]);
+  
+  // useEffect(() => {
+  //   if (supportProjectFilePath) {
+  //     setValue("supportProjectFilePath", supportProjectFilePath);
+  //   }
+  // }, [supportProjectFilePath, setValue]);
 
   useEffect(() => {
     if (opened && !isEditMode) {
@@ -203,6 +204,19 @@ function CreateProjectModal({
             setValue("typeId", data.project_type.id);
             setValue("date_start_the_project", data.date_start_the_project!);
             setValue("date_end_the_project", data.date_end_the_project!);
+            setValue("personnelId", data.personnelId!);
+            setValue("areaId", data.areaId!);
+            setValue("indicators", data.Assemble.map((item) => item.indicator.id) as [string, ...string[]]);
+            setValue(
+              "participatingAgencies",
+              data.Participating_agencies.map((item) => item.agency.id) as [
+                string,
+                ...string[],
+              ],
+            );
+            setValue("approvalProjectFilePath", data.approvalProjectFilePath!);
+            
+
           }
         },
       });
@@ -385,7 +399,8 @@ function CreateProjectModal({
           </ItemStructure>
           <UploadProjectFile
             setApprovalProjectFilePath={setApprovalProjectFilePath}
-            setSupportProjectFilePath={setSupportProjectFilePath}
+            fileUrl={approvalProjectFilePathWatch}
+            // setSupportProjectFilePath={setSupportProjectFilePath}
           />
           <Button color="blue" leftSection={<Plus />} type="submit">
             บันทึก

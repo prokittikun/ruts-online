@@ -117,6 +117,16 @@ export const getProjectById = pb
         include: {
           project_type: true,
           user: true,
+          Assemble: {
+            include: {
+              indicator: true,
+            },
+          },
+          Participating_agencies: {
+            include: {
+              agency: true,
+            },
+          },
         },
       });
       return result;
@@ -186,6 +196,32 @@ export const getProjectTypeById = pb
       const result = await ctx.db.projectType.findUnique({
         where: {
           id: input,
+        },
+      });
+      return result;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
+    }
+  });
+
+export const getAllProjectByStatus = pb
+  .input(z.string().optional())
+  .query(async ({ ctx, input }) => {
+    try {
+      const result = await ctx.db.project.findMany({
+        where: {
+          project_status: input ? (input as ProjectStatus) : undefined,
+        },
+        include: {
+          project_type: true,
+          user: true,
+          Personnel: {
+            include: {
+              Department: true,
+            }
+          }
         },
       });
       return result;

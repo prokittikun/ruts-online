@@ -80,7 +80,7 @@ function Index() {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
 
   const statusOptions = [
-    { label: "รอดำเนินการ", value: ProjectStatus.PENDING },
+    { label: "รออนุมัติ", value: ProjectStatus.PENDING },
     { label: "กำลังดำเนินการ", value: ProjectStatus.IN_PROGRESS },
     { label: "เสร็จสิ้น", value: ProjectStatus.COMPLETED },
     { label: "ยกเลิก", value: ProjectStatus.CANCELED },
@@ -328,7 +328,7 @@ function Index() {
           <span className="text-2xl font-bold">โครงการทั้งหมด</span>
           {status === "authenticated" ? (
             <div className="flex gap-2">
-              <Button
+              {/* <Button
                 size="md"
                 color="blue"
                 leftSection={<FilePlus2 />}
@@ -363,7 +363,7 @@ function Index() {
                 }}
               >
                 ดาวน์โหลดแบบเสนอขอเงินสนับสนุนโครงการ
-              </Button>
+              </Button> */}
               <Button
                 size="md"
                 color="blue"
