@@ -46,6 +46,7 @@ import { modals } from "@mantine/modals";
 import { FindProjectStatus } from "@/utils/ProjectStatusMap";
 import { ProjectStatus } from "@prisma/client";
 import { useDebounceCallback } from "usehooks-ts";
+import CreateProjectModal from "@/components/CreateProjectModal";
 // export const getServerSideProps: GetServerSideProps = async (ctx) => {
 //   // const token = await getToken({
 //   //     req: ctx.req,
@@ -86,7 +87,7 @@ function Index() {
   const [showStatusFilter, setShowStatusFilter] = useState(false);
 
   const statusOptions = [
-    { label: "รอดำเนินการ", value: ProjectStatus.PENDING },
+    { label: "รออนุมัติ", value: ProjectStatus.PENDING },
     { label: "กำลังดำเนินการ", value: ProjectStatus.IN_PROGRESS },
     { label: "เสร็จสิ้น", value: ProjectStatus.COMPLETED },
     { label: "ยกเลิก", value: ProjectStatus.CANCELED },
@@ -259,8 +260,8 @@ function Index() {
       modals.openConfirmModal({
         title: (
           <span>
-            ยินยันที่จะ<span className="font-bold text-red-700">ลบ</span>โครงการ <Badge color="blue">{projectData.name}</Badge>{" "}
-            ใช่หรือไม่ ?
+            ยินยันที่จะ<span className="font-bold text-red-700">ลบ</span>โครงการ{" "}
+            <Badge color="blue">{projectData.name}</Badge> ใช่หรือไม่ ?
           </span>
         ),
         children: (
@@ -380,7 +381,7 @@ function Index() {
     : never;
   return (
     <>
-      <Modal
+      {/* <Modal
         opened={opened}
         onClose={close}
         size={"70%"}
@@ -432,10 +433,7 @@ function Index() {
             />
           </ItemStructure>
           <ItemStructure title="ประเภทโครงการ" required mode="vertical">
-            {/* <Select
-              placeholder="เลือกประเภทโครงการ"
-              data={projectTypeOptions}
-            /> */}
+            
             <ControlledSelect
               className="w-full"
               placeholder="เลือกประเภทโครงการ"
@@ -445,15 +443,7 @@ function Index() {
               control={control}
               name="typeId"
             />
-            {/* <ControlledInputNumber
-              // postfix="คน"
-              required
-              // type="string"
-              // title="ชื่อครุภัณฑ์"
-              placeholder="เลือกประเภทโครงการ"
-              name="typeId"
-              control={control}
-            /> */}
+            
           </ItemStructure>
           <ItemStructure
             title="วันเดือนปีที่เริ่มโครงการ"
@@ -481,23 +471,32 @@ function Index() {
             บันทึก
           </Button>
         </form>
-      </Modal>
+      </Modal> */}
+      <CreateProjectModal
+        opened={opened}
+        close={close}
+        refetch={refetch}
+        isEditMode={isEditMode}
+        setIsEditMode={setIsEditMode}
+        editingProjectId={editingProjectId}
+        setEditingProjectId={setEditingProjectId}
+      />
       <div className="flex flex-col gap-5">
         <div className="flex w-full items-center justify-between">
           <span className="text-2xl font-bold">โครงการทั้งหมด</span>
-          {/* <Button
+          <Button
             size="md"
             color="blue"
             leftSection={<Plus />}
             onClick={() => {
               setEditingProjectId(null);
               setIsEditMode(false);
-              reset();
+              // reset();
               open();
             }}
           >
             เพิ่มโครงการ
-          </Button> */}
+          </Button>
         </div>
         <div className="flex gap-4">
           <Input

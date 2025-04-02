@@ -37,10 +37,10 @@ export const CreateProjectSchema = z.object({
     required_error: "กรุณาอัปโหลดแบบเสนอขออนุมัติโครงการ",
     message: "กรุณาอัปโหลดแบบเสนอขออนุมัติโครงการ",
   }),
-  supportProjectFilePath: z.string({
-    required_error: "กรุณาอัปโหลดแบบเสนอขอเงินสนับสนุนโครงการ",
-    message: "กรุณาอัปโหลดแบบเสนอขอเงินสนับสนุนโครงการ",
-  }),
+  // supportProjectFilePath: z.string({
+  //   required_error: "กรุณาอัปโหลดแบบเสนอขอเงินสนับสนุนโครงการ",
+  //   message: "กรุณาอัปโหลดแบบเสนอขอเงินสนับสนุนโครงการ",
+  // }),
 });
 
 export type ICreateProject = z.infer<typeof CreateProjectSchema>;

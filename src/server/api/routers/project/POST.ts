@@ -35,7 +35,6 @@ export const createProject = pt
         personnelId,
         indicators,
         approvalProjectFilePath,
-        supportProjectFilePath,
       } = input;
       return await ctx.db.project.create({
         data: {
@@ -89,7 +88,6 @@ export const createProject = pt
             })),
           },
           approvalProjectFilePath: approvalProjectFilePath,
-          supportProjectFilePath: supportProjectFilePath,
         },
       });
     } catch (error) {
@@ -113,26 +111,102 @@ export const updateProject = pt
         location,
         project_expenses = 0,
         project_budget,
+        participatingAgencies,
+        areaId,
+        personnelId,
+        indicators,
+        approvalProjectFilePath,
       } = input;
+
+      // Define a properly typed update data object
+      const updateData = {
+        name,
+        detail,
+        date_end_the_project,
+        date_start_the_project,
+        location,
+        project_expenses,
+        project_budget,
+        project_status: "PENDING" as const,
+        project_type: {
+          connect: {
+            id: typeId,
+          },
+        },
+        ...(areaId
+          ? {
+              Area: {
+                connect: {
+                  id: areaId,
+                },
+              },
+            }
+          : {}),
+        ...(personnelId
+          ? {
+              Personnel: {
+                connect: {
+                  id: personnelId,
+                },
+              },
+            }
+          : {}),
+        ...(approvalProjectFilePath ? { approvalProjectFilePath } : {}),
+      };
+
+      // Handle many-to-many relationships outside the initial object
+      if (participatingAgencies && participatingAgencies.length > 0) {
+        // First delete existing relationships
+        await ctx.db.participating_agencies.deleteMany({
+          where: {
+            projectId: id,
+          },
+        });
+
+        // Add participating agencies to update data
+        Object.assign(updateData, {
+          Participating_agencies: {
+            create: participatingAgencies.map((agencyId) => ({
+              agency: {
+                connect: {
+                  id: agencyId,
+                },
+              },
+              assignedAt: new Date(),
+              assignedBy: ctx.session.user.id,
+            })),
+          },
+        });
+      }
+
+      if (indicators && indicators.length > 0) {
+        // First delete existing relationships
+        await ctx.db.assemble.deleteMany({
+          where: {
+            projectId: id,
+          },
+        });
+
+        // Add indicators to update data
+        Object.assign(updateData, {
+          Assemble: {
+            create: indicators.map((indicatorId) => ({
+              name: "",
+              indicator: {
+                connect: {
+                  id: indicatorId,
+                },
+              },
+            })),
+          },
+        });
+      }
+
       return await ctx.db.project.update({
         where: {
           id,
         },
-        data: {
-          name,
-          detail,
-          date_end_the_project,
-          date_start_the_project,
-          location,
-          project_expenses,
-          project_budget,
-          project_status: "PENDING",
-          project_type: {
-            connect: {
-              id: typeId,
-            },
-          },
-        },
+        data: updateData,
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -140,7 +214,6 @@ export const updateProject = pt
       }
     }
   });
-
 export const approveProject = am
   .input(z.string())
   .mutation(async ({ ctx, input }) => {
