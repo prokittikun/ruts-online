@@ -312,11 +312,7 @@ function CreateProjectModal({
               control={control}
             />
           </ItemStructure>
-          <ItemStructure title="ประเภทโครงการ" required mode="vertical">
-            {/* <Select
-                  placeholder="เลือกประเภทโครงการ"
-                  data={projectTypeOptions}
-                /> */}
+          {/* <ItemStructure title="ประเภทโครงการ" required mode="vertical">
             <ControlledSelect
               className="w-full"
               placeholder="เลือกประเภทโครงการ"
@@ -327,7 +323,7 @@ function CreateProjectModal({
               searchable
               name="typeId"
             />
-          </ItemStructure>
+          </ItemStructure> */}
           <ItemStructure title="ตัวชี้วัด" required mode="vertical">
             {/* <Select
                   placeholder="เลือกประเภทโครงการ"
