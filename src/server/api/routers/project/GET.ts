@@ -220,8 +220,11 @@ export const getAllProjectByStatus = pb
           Personnel: {
             include: {
               Department: true,
-            }
-          }
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
         },
       });
       return result;

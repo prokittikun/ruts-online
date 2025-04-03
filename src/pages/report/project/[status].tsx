@@ -49,13 +49,19 @@ export default function EquipmentReport(
         <table className="table-container mb-8 w-full border-collapse border border-gray-300">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border border-gray-300 px-6 py-3 text-center text-xs">
+              <th className="border border-gray-300 px-6 py-3 text-center text-xs"
+                style={{ width: "10px" }}
+                >
                 ลำดับ
               </th>
-              <th className="border border-gray-300 px-6 py-3 text-center text-xs">
+              <th className="border border-gray-300 px-6 py-3 text-center text-xs"
+                style={{ width: "150px" }}
+                >
                 ชื่อโครงการ
               </th>
-              <th className="border border-gray-300 px-6 py-3 text-center text-xs">
+              <th className="border border-gray-300 px-6 py-3 text-center text-xs"
+                style={{ width: "230px" }}
+                >
                 อาจารย์ผู้รับผิดชอบโครงการ
               </th>
               <th className="border border-gray-300 px-6 py-3 text-center text-xs">
@@ -63,7 +69,7 @@ export default function EquipmentReport(
               </th>
               <th
                 className="border border-gray-300 px-6 py-3 text-center text-xs"
-                style={{ width: "50px" }}
+                style={{ width: "150px" }}
               >
                 สถานะโครงการ
               </th>

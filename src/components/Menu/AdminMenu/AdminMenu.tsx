@@ -33,7 +33,7 @@ const data = [
   { link: "/project-type-management", label: "ข้อมูลประเภทโครงการ", icon: IconTypography },
   { link: "/indicator-management", label: "ข้อมูลตัวชี้วัด", icon: IconChartLine },
   { link: "/agency-management", label: "ข้อมูลตัวหน่วยงาน", icon: IconBuildingSkyscraper },
-  { link: "/area-management", label: "ข้อมูลพื้นที่กำเนินการ", icon: IconWorld },
+  { link: "/area-management", label: "ข้อมูลพื้นที่ดำเนินการ", icon: IconWorld },
   { link: "/pdf-management", label: "ออกรายงาน", icon: IconPdf },
 ];
 
