@@ -21,7 +21,12 @@ export const CreateProjectSchema = z.object({
     },
   ),
   areaId: z.string({ required_error: "กรุณาเลือกพื้นที่จัดโครงการ" }),
-  personnelId: z.string({ required_error: "กรุณาเลือกผู้รับผิดชอบโครงการ" }),
+  personnelId: z.string({ required_error: "กรุณาเลือกหัวหน้าโครงการ" }),
+  owners: z
+    .array(z.string({ required_error: "กรุณาเลือกผู้รับผิดชอบโครงการ" }), {
+      required_error: "กรุณาเลือกผู้รับผิดชอบโครงการ",
+    })
+    .nonempty({ message: "กรุณาเลือกผู้รับผิดชอบโครงการ" }),
   indicators: z
     .array(z.string({ required_error: "กรุณาเลือกตัวชี้วัด" }), {
       required_error: "กรุณาเลือกตัวชี้วัด",

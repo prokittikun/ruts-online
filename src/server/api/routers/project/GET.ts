@@ -76,7 +76,7 @@ export const getAllProject = pb
         },
         include: {
           project_type: true,
-          user: true,
+          Personnel: true,
         },
       });
       const itemPerpage = result.length;
@@ -116,7 +116,7 @@ export const getProjectById = pb
         },
         include: {
           project_type: true,
-          user: true,
+          Personnel: true,
           Assemble: {
             include: {
               indicator: true,
@@ -216,7 +216,6 @@ export const getAllProjectByStatus = pb
         },
         include: {
           project_type: true,
-          user: true,
           Personnel: {
             include: {
               Department: true,

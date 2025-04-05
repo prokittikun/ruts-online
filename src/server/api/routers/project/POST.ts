@@ -35,6 +35,7 @@ export const createProject = pt
         personnelId,
         indicators,
         approvalProjectFilePath,
+        owners,
       } = input;
       return await ctx.db.project.create({
         data: {
@@ -46,11 +47,7 @@ export const createProject = pt
           project_expenses,
           project_budget,
           project_status: "PENDING",
-          user: {
-            connect: {
-              id: ctx.session.user.id,
-            },
-          },
+
           project_type: {
             connect: {
               id: typeId,
@@ -63,7 +60,7 @@ export const createProject = pt
           },
           Personnel: {
             connect: {
-              id: personnelId,
+              id: Number(personnelId),
             },
           },
           Participating_agencies: {
@@ -74,7 +71,15 @@ export const createProject = pt
                 },
               },
               assignedAt: new Date(),
-              assignedBy: ctx.session.user.id, // Assuming the user assigns the agency
+            })),
+          },
+          Owner: {
+            create: owners.map((ownerId) => ({
+              personnel: {
+                connect: {
+                  id: Number(ownerId),
+                },
+              },
             })),
           },
           Assemble: {
@@ -146,7 +151,7 @@ export const updateProject = pt
           ? {
               Personnel: {
                 connect: {
-                  id: personnelId,
+                  id: Number(personnelId),
                 },
               },
             }

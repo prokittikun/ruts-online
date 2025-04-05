@@ -5,7 +5,7 @@ const pb = publicProcedure;
 
 export const deletePersonnel = pt
   .input(
-    z.string()
+    z.number()
   )
   .mutation(async ({ ctx, input }) => {
     try {

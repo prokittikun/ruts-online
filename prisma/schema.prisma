@@ -14,18 +14,18 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
-model User {
-    id         String    @id @default(uuid())
-    email      String
-    password   String
-    first_name String?
-    last_name  String?
-    tel        String?
-    role       Role      @default(PERSONNEL)
-    createdAt  DateTime  @default(now())
-    updatedAt  DateTime  @updatedAt
-    Project    Project[]
-}
+// model User {
+//     id         String    @id @default(uuid())
+//     email      String
+//     password   String
+//     first_name String?
+//     last_name  String?
+//     tel        String?
+//     role       Role      @default(PERSONNEL)
+//     createdAt  DateTime  @default(now())
+//     updatedAt  DateTime  @updatedAt
+//     Project    Project[]
+// }
 
 enum Role {
     PERSONNEL
@@ -33,14 +33,26 @@ enum Role {
 }
 
 model Personnel {
-    id           String      @id @default(uuid())
-    name         String
+    id           Int         @id @default(autoincrement())
     email        String
-    tel          String
+    password     String
+    first_name   String?
+    last_name    String?
+    tel          String?
+    role         Role        @default(PERSONNEL)
     address      String
     project      Project[]
     Department   Department? @relation(fields: [departmentId], references: [id])
     departmentId String?
+    Owner        Owner[]
+}
+
+model Owner {
+    id          Int       @id @default(autoincrement())
+    project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+    projectId   String
+    personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
+    personnelId Int
 }
 
 model Department {
@@ -76,20 +88,19 @@ model Project {
     type                    String
     project_expenses        Int
     project_budget          Int
-    project_owner           String
     project_status          ProjectStatus
-    user                    User                     @relation(fields: [project_owner], references: [id], onDelete: Cascade)
     project_type            ProjectType              @relation(fields: [type], references: [id], onDelete: Cascade)
     createdAt               DateTime                 @default(now())
     updatedAt               DateTime                 @updatedAt
     Area                    Area?                    @relation(fields: [areaId], references: [id])
     areaId                  String?
     Personnel               Personnel?               @relation(fields: [personnelId], references: [id])
-    personnelId             String?
+    personnelId             Int?
     Participating_agencies  Participating_agencies[]
     Assemble                Assemble[]
     approvalProjectFilePath String?
     supportProjectFilePath  String?
+    Owner                   Owner[]
 }
 
 model Participating_agencies {
@@ -98,7 +109,6 @@ model Participating_agencies {
     agency     Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
     agencyId   String
     assignedAt DateTime @default(now())
-    assignedBy String
 
     @@id([projectId, agencyId])
 }

@@ -1,7 +1,7 @@
 import { ControlledInput } from "@/components/Controlled";
 import ItemStructure from "@/components/ItemStructure";
 import { AdminMenu } from "@/components/Menu/AdminMenu/AdminMenu";
-import { IUpdateUser, UpdateUserSchema } from "@/schemas/users/updateUser";
+import { type IUpdatePersonnel, UpdatePersonnelSchema } from "@/schemas/personnel/updatePersonnel";
 import { api } from "@/utils/api";
 import { FindRole } from "@/utils/positionMap";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,8 +42,8 @@ export default function AdminLayout({
   };
   const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
   const [desktopOpened, { toggle: toggleDesktop }] = useDisclosure(true);
-  const updateUserApi = api.user.updateUser.useMutation();
-  const getUserByIdApi = api.user.getUserById.useMutation();
+  const updatePersonnelApi = api.personnel.updatePersonnel.useMutation();
+  const getPersonnelByIdApi = api.personnel.getPersonnelById.useMutation();
   
   useEffect(() => {
     if (mobileOpened) {
@@ -52,7 +52,7 @@ export default function AdminLayout({
   }, [pathname]);
 
 
-  type FormUpdateUser = Omit<IUpdateUser, 'id'>;
+  type FormUpdatePersonnel = Omit<IUpdatePersonnel, 'id'>;
 
   const {
     register,
@@ -62,21 +62,21 @@ export default function AdminLayout({
     watch,
     control,
     reset,
-  } = useForm<FormUpdateUser>({
-    resolver: zodResolver(UpdateUserSchema.omit({ id: true })),
+  } = useForm<FormUpdatePersonnel>({
+    resolver: zodResolver(UpdatePersonnelSchema.omit({ id: true })),
   });
 
-  const onSubmit = (data: FormUpdateUser) => {
+  const onSubmit = (data: FormUpdatePersonnel) => {
     try {
       const idToast = toast.loading("กำลังอัพเดตบัญชีผู้ใช้...");
 
       // Update operation
-      const updateData: IUpdateUser = {
+      const updateData: IUpdatePersonnel = {
         ...data,
         id: session?.user.id!, // Add the ID for update
       };
 
-      updateUserApi.mutate(updateData, {
+      updatePersonnelApi.mutate(updateData, {
         onSuccess: () => {
           toast.success("อัพเดตบัญชีผู้ใช้สำเร็จ", { id: idToast });
           close();
@@ -96,8 +96,8 @@ export default function AdminLayout({
     }
   };
 
-  const handleOnClickEdit = (userId: string) => {
-    getUserByIdApi.mutate(userId, {
+  const handleOnClickEdit = (userId: number) => {
+    getPersonnelByIdApi.mutate(userId, {
       onSuccess: (data) => {
         if (data) {
           // Populate form with existing equipment data
@@ -198,13 +198,13 @@ export default function AdminLayout({
             <Dropdown
               menu={{
                 items: [
-                  // ...(getOrganizationByUserIdApi?.data?.orgnameth
+                  // ...(getOrganizationByPersonnelIdApi?.data?.orgnameth
                   //   ? [
                   //       {
                   //         key: "1",
                   //         label: (
                   //           <div className="max-w-48 text-black text-wrap">
-                  //             {getOrganizationByUserIdApi.data?.orgnameth}
+                  //             {getOrganizationByPersonnelIdApi.data?.orgnameth}
                   //           </div>
                   //         ),
                   //         danger: false,

@@ -7,9 +7,8 @@ import {
 
 import { SignInSchema } from "@/schemas/auth";
 import { db } from "@/server/db";
-import * as bcrypt from "bcrypt";
-import Credentials from "next-auth/providers/credentials";
 import { type Role } from "@prisma/client";
+import Credentials from "next-auth/providers/credentials";
 /**
  * Module augmentation for `next-auth` types. Allows us to add custom properties to the `session`
  * object and keep type safety.
@@ -19,7 +18,7 @@ import { type Role } from "@prisma/client";
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id: string;
+    id: number;
     email: string;
     role: Role;
     firstName: string;
@@ -31,7 +30,7 @@ declare module "next-auth/jwt" {
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: DefaultSession["user"] & {
-      id: string;
+      id: number;
       email: string;
       role: Role;
       firstName: string;
@@ -43,7 +42,7 @@ declare module "next-auth" {
   }
 
   interface User {
-    id: string;
+    id: number;
     email: string;
     role: Role;
     firstName: string;
@@ -76,7 +75,7 @@ export const authOptions: NextAuthOptions = {
     },
     jwt: async ({ token, user }) => {
       if (user) {
-        token.id = user.id;
+        token.id = Number(user.id);
         token.email = user.email;
         token.role = user.role;
         token.firstName = user.firstName;
@@ -108,7 +107,7 @@ export const authOptions: NextAuthOptions = {
           const { email, password } =
             await SignInSchema.parseAsync(credentials);
 
-          const user = await db.user.findFirst({
+          const user = await db.personnel.findFirst({
             where: {
               email: email,
               password: password,
@@ -122,9 +121,10 @@ export const authOptions: NextAuthOptions = {
           return {
             id: user.id,
             email: user.email,
-            firstName: user.first_name ?? "",
+            firstName: user.first_name ?? "" ,
             lastName: user.last_name ?? "",
             role: user.role,
+            name: `${user.first_name} ${user.last_name}`, 
           };
         } catch (err) {
           throw err;

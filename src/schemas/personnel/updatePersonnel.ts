@@ -1,18 +1,29 @@
 import z from "zod";
 
 export const UpdatePersonnelSchema = z.object({
-  id: z.string({
+  id: z.number({
     description: "Project ID",
     required_error: "ต้องระบุ Project ID",
   }),
-  name: z.string({
+  firstName: z.string({
     description: "ชื่อผู้ใช้งาน",
     required_error: "ต้องระบุชื่อผู้ใช้งาน",
   }),
+  lastName: z.string({
+    description: "นามสกุลผู้ใช้งาน",
+    required_error: "ต้องระบุนามสกุลผู้ใช้งาน",
+  }),
   email: z.string({ required_error: "กรุณากรอกที่อยู่อีเมล" }).email(),
+  password: z.string({
+    description: "รหัสผ่าน",
+    required_error: "ต้องระบุรหัสผ่าน",
+  }).optional(),
   tel: z.string({ required_error: "กรุณากรอกเบอร์ติดต่อ" }),
   address: z.string({ required_error: "กรุณากรอกที่อยู่" }),
-  departmentId: z.string({ required_error: "กรุณาเลือกสาขา" }),
+  departmentId: z.string({ required_error: "กรุณาเลือกสาขา" }).optional(),
+  role: z
+    .enum(["ADMIN", "PERSONNEL"], { required_error: "กรุณาเลือกตำแหน่ง" })
+    .optional(),
 });
 
 export type IUpdatePersonnel = z.infer<typeof UpdatePersonnelSchema>;

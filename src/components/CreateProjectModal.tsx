@@ -9,19 +9,18 @@ import {
 import { api } from "@/utils/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Modal } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { ProjectStatus } from "@prisma/client";
-import React, { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import ItemStructure from "./ItemStructure";
 import { ControlledInput } from "./Controlled";
-import ControlledSelect from "./ControlledSelect";
-import ControlledInputNumber from "./ControlledInputNumber";
 import ControlledDatePicker from "./ControlledDatePicker";
+import ControlledInputNumber from "./ControlledInputNumber";
 import ControlledMultiSelect from "./ControlledMultiSelect";
-import { Plus } from "lucide-react";
+import ControlledSelect from "./ControlledSelect";
+import ItemStructure from "./ItemStructure";
 import UploadProjectFile from "./UploadProjectFile";
+import { Role } from "@prisma/client";
 
 interface Props {
   opened: boolean;
@@ -60,7 +59,9 @@ function CreateProjectModal({
     enabled: !!opened,
   });
 
-  const getAllPersonnelApi = api.personnel.getAllPersonnel.useQuery(undefined, {
+  const getAllPersonnelApi = api.personnel.getAllPersonnel.useQuery({
+    role: Role.PERSONNEL
+  }, {
     enabled: !!opened,
   });
 
@@ -83,8 +84,8 @@ function CreateProjectModal({
   }));
 
   const personnelOptions = getAllPersonnelApi.data?.map((person) => ({
-    label: person.name,
-    value: person.id,
+    label: person.first_name + " " + person.last_name,
+    value: person.id.toString(),
   }));
 
   const agencyOptions = getAllAgencyApi.data?.map((agency) => ({
@@ -121,7 +122,7 @@ function CreateProjectModal({
       setValue("approvalProjectFilePath", approvalProjectFilePath);
     }
   }, [approvalProjectFilePath, setValue]);
-  
+
   // useEffect(() => {
   //   if (supportProjectFilePath) {
   //     setValue("supportProjectFilePath", supportProjectFilePath);
@@ -204,9 +205,15 @@ function CreateProjectModal({
             setValue("typeId", data.project_type.id);
             setValue("date_start_the_project", data.date_start_the_project!);
             setValue("date_end_the_project", data.date_end_the_project!);
-            setValue("personnelId", data.personnelId!);
+            setValue("personnelId", data.personnelId!.toString());
             setValue("areaId", data.areaId!);
-            setValue("indicators", data.Assemble.map((item) => item.indicator.id) as [string, ...string[]]);
+            setValue(
+              "indicators",
+              data.Assemble.map((item) => item.indicator.id) as [
+                string,
+                ...string[],
+              ],
+            );
             setValue(
               "participatingAgencies",
               data.Participating_agencies.map((item) => item.agency.id) as [
@@ -215,8 +222,6 @@ function CreateProjectModal({
               ],
             );
             setValue("approvalProjectFilePath", data.approvalProjectFilePath!);
-            
-
           }
         },
       });
@@ -254,16 +259,34 @@ function CreateProjectModal({
               control={control}
             />
           </ItemStructure>
-          <ItemStructure title="เจ้าของโครงการ" required mode="vertical">
+          <ItemStructure title="หัวหน้าของโครงการ" required mode="vertical">
             <ControlledSelect
               className="w-full"
-              placeholder="เลือกเจ้าของโครงการ"
+              placeholder="เลือกหัวหน้าของโครงการ"
               option={personnelOptions}
               searchable
               // checkIconPosition="right"
               // searchable
               control={control}
               name="personnelId"
+            />
+          </ItemStructure>
+          <ItemStructure title="ผู้รับผิดชอบโครงการ" required mode="vertical">
+            {/* <Select
+                  placeholder="เลือกประเภทโครงการ"
+                  data={projectTypeOptions}
+                /> */}
+            <ControlledMultiSelect
+              required
+              searchable
+              control={control}
+              name="owners"
+              placeholder="เลือกผู้รับผิดชอบโครงการ"
+              option={
+                personnelOptions?.filter(
+                  (person) => person.value !== watch("personnelId"),
+                ) ?? []
+              }
             />
           </ItemStructure>
           <ItemStructure title="สถานที่จัดโครงการ" required mode="vertical">
