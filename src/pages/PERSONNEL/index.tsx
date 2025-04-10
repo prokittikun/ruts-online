@@ -61,7 +61,7 @@ function Index() {
   const { data: session, status } = useSession();
   const [opened, { open, close }] = useDisclosure(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingProjectId, setEditingProjectId] = React.useState<string | null>(
+  const [editingProjectId, setEditingProjectId] = React.useState<number | null>(
     null,
   );
   const [searchValue, setSearchValue] = useState("");
@@ -103,6 +103,7 @@ function Index() {
     perPages: perPage,
     keyword: searchValue,
     status: selectedStatuses.length > 0 ? selectedStatuses : undefined,
+    personnelId: session?.user.id,
   });
   const deleteProjectApi = api.project.deleteProject.useMutation();
   const resentProjectApi = api.project.resentProject.useMutation();
@@ -421,6 +422,14 @@ function Index() {
           }}
           columns={
             [
+              {
+                title: "#",
+                dataIndex: "id",
+                key: "id",
+                render: (_, r) => (
+                  <div className="whitespace-nowrap">{r.id}</div>
+                ),
+              },
               {
                 title: "ชื่อโครงการ",
                 dataIndex: "name",

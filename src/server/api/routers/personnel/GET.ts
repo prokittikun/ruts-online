@@ -1,18 +1,31 @@
 import { publicProcedure } from "@/server/api/trpc";
 import paginationCalculator from "@/utils/paginationCalculator";
+import { type Role } from "@prisma/client";
 import { z } from "zod";
 const pb = publicProcedure;
 
-export const getAllPersonnel = pb.query(async ({ ctx, input }) => {
-  try {
-    const result = await ctx.db.personnel.findMany();
-    return result;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(error.message);
+export const getAllPersonnel = pb
+  .input(
+    z
+      .object({
+        role: z.string().optional(),
+      })
+      .optional(),
+  )
+  .query(async ({ ctx, input }) => {
+    try {
+      const result = await ctx.db.personnel.findMany({
+        where: {
+          ...(input?.role ? { role: input.role as Role } : {}),
+        },
+      });
+      return result;
+    } catch (error) {
+      if (error instanceof Error) {
+        throw new Error(error.message);
+      }
     }
-  }
-});
+  });
 
 export const getAllPersonnelPaginate = pb
   .input(
@@ -29,7 +42,7 @@ export const getAllPersonnelPaginate = pb
 
       const totalItems = await ctx.db.personnel.count({
         where: {
-          name: {
+          first_name: {
             contains: keyword ?? "",
           },
         },
@@ -42,7 +55,7 @@ export const getAllPersonnelPaginate = pb
 
       const result = await ctx.db.personnel.findMany({
         where: {
-          name: {
+          first_name: {
             contains: keyword ?? "",
           },
         },
@@ -50,7 +63,7 @@ export const getAllPersonnelPaginate = pb
         take: paginate.limit,
         include: {
           Department: true,
-        }
+        },
         // orderBy: {
         //   createdAt: "desc",
         // },
@@ -72,7 +85,7 @@ export const getAllPersonnelPaginate = pb
   });
 
 export const getPersonnelById = pb
-  .input(z.string())
+  .input(z.number())
   .mutation(async ({ ctx, input }) => {
     try {
       const result = await ctx.db.personnel.findUnique({

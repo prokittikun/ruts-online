@@ -13,11 +13,23 @@ export const createPersonnel = am
   .input(CreatePersonnelSchema)
   .mutation(async ({ ctx, input }) => {
     try {
-      const { name, email, address, tel, departmentId } = input;
+      const {
+        firstName,
+        lastName,
+        email,
+        password,
+        address,
+        tel,
+        departmentId,
+        role,
+      } = input;
       return await ctx.db.personnel.create({
         data: {
-          name: name,
+          first_name: firstName,
+          last_name: lastName,
           email: email,
+          password: password,
+          role: role,
           tel: tel,
           address: address,
           Department: {
@@ -38,14 +50,26 @@ export const updatePersonnel = pt
   .input(UpdatePersonnelSchema)
   .mutation(async ({ ctx, input }) => {
     try {
-      const { id, name, email, address, tel, departmentId } = input;
+      const {
+        id,
+        firstName,
+        lastName,
+        email,
+        password,
+        address,
+        tel,
+        departmentId,
+        role,
+      } = input;
       return await ctx.db.personnel.update({
         where: {
           id: id,
         },
         data: {
-          name: name,
+          first_name: firstName,
+          last_name: lastName,
           email: email,
+          password: password,
           tel: tel,
           address: address,
           Department: {
@@ -53,6 +77,7 @@ export const updatePersonnel = pt
               id: departmentId,
             },
           },
+          role: role,
         },
       });
     } catch (error) {

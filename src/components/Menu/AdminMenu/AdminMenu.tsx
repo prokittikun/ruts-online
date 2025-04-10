@@ -27,7 +27,6 @@ const prefix = "/ADMIN";
 
 const data = [
   { link: "", label: "ข้อมูลโครงการ", icon: IconDatabase },
-  { link: "/user-management", label: "เพิ่มผู้ใช้งาน", icon: IconUserPlus },
   { link: "/personnel-management", label: "ข้อมูลบุคลากร", icon: IconUserPlus },
   { link: "/department-management", label: "ข้อมูลสาขา", icon: IconBuilding },
   { link: "/project-type-management", label: "ข้อมูลประเภทโครงการ", icon: IconTypography },

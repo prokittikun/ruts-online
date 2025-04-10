@@ -2,7 +2,6 @@ import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
 import { AreaRouter } from "./routers/area";
 import { PersonnelRouter } from "./routers/personnel";
 import { ProjectRouter } from "./routers/project";
-import { UserRouter } from "./routers/user";
 import { AgencyRouter } from "./routers/agency";
 import { IndicatorRouter } from "./routers/indicators";
 import { DepartmentRouter } from "./routers/department";
@@ -14,7 +13,6 @@ import { DepartmentRouter } from "./routers/department";
  */
 export const appRouter = createTRPCRouter({
   project: ProjectRouter,
-  user: UserRouter,
   area: AreaRouter,
   personnel: PersonnelRouter,
   agency: AgencyRouter,

@@ -3,8 +3,14 @@ import React, { useState } from "react";
 import { ControlledInput } from "@/components/Controlled";
 import ControlledSelect from "@/components/ControlledSelect";
 import ItemStructure from "@/components/ItemStructure";
-import { CreatePersonnelSchema, type ICreatePersonnel } from "@/schemas/personnel/createPersonnel";
-import { type IUpdatePersonnel, UpdatePersonnelSchema } from "@/schemas/personnel/updatePersonnel";
+import {
+  CreatePersonnelSchema,
+  type ICreatePersonnel,
+} from "@/schemas/personnel/createPersonnel";
+import {
+  type IUpdatePersonnel,
+  UpdatePersonnelSchema,
+} from "@/schemas/personnel/updatePersonnel";
 import { api } from "@/utils/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Badge, Button, Input, Modal, Popover } from "@mantine/core";
@@ -19,6 +25,8 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useDebounceCallback } from "usehooks-ts";
+import { FindRole } from "@/utils/positionMap";
+import { Role } from "@prisma/client";
 // export const getServerSideProps: GetServerSideProps = async (ctx) => {
 //   // const token = await getToken({
 //   //     req: ctx.req,
@@ -41,7 +49,9 @@ function PersonnelManagement() {
   const { data: session, status: sessionStatus } = useSession();
   const [opened, { open, close }] = useDisclosure(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingPersonnelId, setEditingPersonnelId] = React.useState<string | null>(null);
+  const [editingPersonnelId, setEditingPersonnelId] = React.useState<
+    number | null
+  >(null);
   const [searchValue, setSearchValue] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
@@ -61,16 +71,21 @@ function PersonnelManagement() {
   const deletePersonnelApi = api.personnel.deletePersonnel.useMutation();
   const getPersonnelByIdApi = api.personnel.getPersonnelById.useMutation();
 
-  const getAllDepartmentApi = api.department.getAllDepartment.useQuery(undefined, {
+  const getAllDepartmentApi = api.department.getAllDepartment.useQuery(
+    undefined,
+    {
       enabled: !!opened,
-    });
-  
-    const departmentOptions = getAllDepartmentApi.data?.map((department) => ({
-      label: department.name,
-      value: department.id,
-    }));
+    },
+  );
 
-  const combinedSchema = CreatePersonnelSchema.merge(UpdatePersonnelSchema.partial());
+  const departmentOptions = getAllDepartmentApi.data?.map((department) => ({
+    label: department.name,
+    value: department.id,
+  }));
+
+  const combinedSchema = CreatePersonnelSchema.merge(
+    UpdatePersonnelSchema.partial(),
+  );
 
   type PersonnelFormData = ICreatePersonnel & Partial<IUpdatePersonnel>;
 
@@ -141,18 +156,21 @@ function PersonnelManagement() {
     }
   };
 
-  const handleOnClickEdit = (userId: string) => {
+  const handleOnClickEdit = (userId: number) => {
     setIsEditMode(true);
     setEditingPersonnelId(userId);
     getPersonnelByIdApi.mutate(userId, {
       onSuccess: (data) => {
         if (data) {
           // Populate form with existing equipment data
-          setValue("name", data.name ?? "");
+          setValue("firstName", data.first_name ?? "");
+          setValue("lastName", data.last_name ?? "");
           setValue("email", data.email);
+          setValue("password", data.password);
           setValue("tel", data.tel ?? "");
           setValue("address", data.address ?? "");
           setValue("departmentId", data.departmentId!);
+          setValue("role", data.role);
           open(); // Open drawer
         }
       },
@@ -166,7 +184,7 @@ function PersonnelManagement() {
           <span>
             ยินยันที่จะลบบุคลากร{" "}
             <Badge color="blue">
-              {userData.name}
+              {userData.first_name + " " + userData.last_name}
             </Badge>{" "}
             ใช่หรือไม่ ?
           </span>
@@ -226,12 +244,22 @@ function PersonnelManagement() {
               required
               // type="string"
               // title="ชื่อครุภัณฑ์"
-              placeholder="ระบุชื่อ-นามสกุล"
-              name="name"
+              placeholder="ระบุชื่อ"
+              name="firstName"
               control={control}
             />
           </ItemStructure>
-          <ItemStructure title="ที่อยู่อีเมล" required mode="vertical" >
+          <ItemStructure title="นามสกุล" mode="vertical" required>
+            <ControlledInput
+              // postfix="คน"
+              // type="string"
+              // title="ชื่อครุภัณฑ์"
+              placeholder="ระบุนามสกุล"
+              name="lastName"
+              control={control}
+            />
+          </ItemStructure>
+          <ItemStructure title="ที่อยู่อีเมล" required mode="vertical">
             <ControlledInput
               // postfix="คน"
               required
@@ -239,6 +267,16 @@ function PersonnelManagement() {
               // title="ชื่อครุภัณฑ์"
               placeholder="ระบุที่อยู่อีเมล"
               name="email"
+              control={control}
+            />
+          </ItemStructure>
+          <ItemStructure title="รหัสผ่าน" mode="vertical" required={!isEditMode}>
+            <ControlledInput
+              // postfix="คน"
+              // type="string"
+              // title="ชื่อครุภัณฑ์"
+              placeholder="ระบุรหัสผ่าน"
+              name="password"
               control={control}
             />
           </ItemStructure>
@@ -262,9 +300,8 @@ function PersonnelManagement() {
               control={control}
             />
           </ItemStructure>
-          <ItemStructure title="สาขา" required mode="vertical" >
+          <ItemStructure title="สาขา" mode="vertical">
             <ControlledSelect
-              required
               className="w-full"
               placeholder="เลือกสาขา"
               option={departmentOptions}
@@ -272,6 +309,27 @@ function PersonnelManagement() {
               // searchable
               control={control}
               name="departmentId"
+            />
+          </ItemStructure>
+          <ItemStructure title="ตำแหน่ง" required mode="vertical">
+            <ControlledSelect
+              required
+              className="w-full"
+              placeholder="เลือกตำแหน่ง"
+              option={[
+                {
+                  label: "ผู้ดูแลระบบ",
+                  value: "ADMIN",
+                },
+                {
+                  label: "บุคลากร",
+                  value: "PERSONNEL",
+                },
+              ]}
+              // checkIconPosition="right"
+              // searchable
+              control={control}
+              name="role"
             />
           </ItemStructure>
           <Button color="blue" leftSection={<Plus />} type="submit">
@@ -324,7 +382,9 @@ function PersonnelManagement() {
                 dataIndex: "name",
                 key: "name",
                 render: (_, r) => (
-                  <div className="whitespace-nowrap">{r.name}</div>
+                  <div className="whitespace-nowrap">
+                    {r.first_name + " " + r.last_name}
+                  </div>
                 ),
               },
               // {
@@ -357,7 +417,6 @@ function PersonnelManagement() {
                 key: "address",
                 render: (_, r) => (
                   <div className="whitespace-nowrap">{r.address}</div>
-
                 ),
               },
               {
@@ -366,7 +425,18 @@ function PersonnelManagement() {
                 key: "department",
                 render: (_, r) => (
                   <div className="whitespace-nowrap">{r.Department?.name}</div>
-
+                ),
+              },
+              {
+                title: "ตำแหน่ง",
+                dataIndex: "role",
+                key: "role",
+                render: (_, r) => (
+                  <Badge color={r.role === Role.ADMIN ? "red" : "blue"}>
+                    <div className="whitespace-nowrap">
+                      {FindRole(r.role ?? "NonePosition")?.description}
+                    </div>
+                  </Badge>
                 ),
               },
               {

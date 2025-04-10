@@ -9,19 +9,20 @@ import {
 import { api } from "@/utils/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Modal } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { ProjectStatus } from "@prisma/client";
-import React, { useEffect, useState } from "react";
+import { Plus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import ItemStructure from "./ItemStructure";
 import { ControlledInput } from "./Controlled";
-import ControlledSelect from "./ControlledSelect";
-import ControlledInputNumber from "./ControlledInputNumber";
 import ControlledDatePicker from "./ControlledDatePicker";
+import ControlledInputNumber from "./ControlledInputNumber";
 import ControlledMultiSelect from "./ControlledMultiSelect";
-import { Plus } from "lucide-react";
+import ControlledSelect from "./ControlledSelect";
+import ItemStructure from "./ItemStructure";
 import UploadProjectFile from "./UploadProjectFile";
+import { Role } from "@prisma/client";
+import { useSession } from "next-auth/react";
+import { YearPicker } from "@mantine/dates";
 
 interface Props {
   opened: boolean;
@@ -29,8 +30,8 @@ interface Props {
   refetch: () => void;
   isEditMode: boolean;
   setIsEditMode: (isEditMode: boolean) => void;
-  editingProjectId: string | null;
-  setEditingProjectId: (projectId: string | null) => void;
+  editingProjectId: number | null;
+  setEditingProjectId: (projectId: number | null) => void;
 }
 
 function CreateProjectModal({
@@ -42,6 +43,7 @@ function CreateProjectModal({
   editingProjectId,
   setEditingProjectId,
 }: Props) {
+  const { data: session, status } = useSession();
   const [approvalProjectFilePath, setApprovalProjectFilePath] =
     useState<string>("");
   const [supportProjectFilePath, setSupportProjectFilePath] =
@@ -60,9 +62,14 @@ function CreateProjectModal({
     enabled: !!opened,
   });
 
-  const getAllPersonnelApi = api.personnel.getAllPersonnel.useQuery(undefined, {
-    enabled: !!opened,
-  });
+  const getAllPersonnelApi = api.personnel.getAllPersonnel.useQuery(
+    {
+      role: Role.PERSONNEL,
+    },
+    {
+      enabled: !!opened,
+    },
+  );
 
   const getAllAgencyApi = api.agency.getAllAgency.useQuery(undefined, {
     enabled: !!opened,
@@ -83,8 +90,8 @@ function CreateProjectModal({
   }));
 
   const personnelOptions = getAllPersonnelApi.data?.map((person) => ({
-    label: person.name,
-    value: person.id,
+    label: person.first_name + " " + person.last_name,
+    value: person.id.toString(),
   }));
 
   const agencyOptions = getAllAgencyApi.data?.map((agency) => ({
@@ -121,7 +128,7 @@ function CreateProjectModal({
       setValue("approvalProjectFilePath", approvalProjectFilePath);
     }
   }, [approvalProjectFilePath, setValue]);
-  
+
   // useEffect(() => {
   //   if (supportProjectFilePath) {
   //     setValue("supportProjectFilePath", supportProjectFilePath);
@@ -199,14 +206,25 @@ function CreateProjectModal({
             // Populate form with existing equipment data
             setValue("name", data.name);
             setValue("detail", data.detail);
-            setValue("location", data.location ?? "");
             setValue("project_budget", data.project_budget);
-            setValue("typeId", data.project_type.id);
+            setValue("typeId", data.project_type?.id ?? "");
             setValue("date_start_the_project", data.date_start_the_project!);
             setValue("date_end_the_project", data.date_end_the_project!);
-            setValue("personnelId", data.personnelId!);
+            setValue(
+              "personnelId",
+              session?.user.role == Role.ADMIN
+                ? data.personnelId!.toString()
+                : session?.user.id!.toString(),
+            );
+            setValue("fiscal_year", data.fiscal_year!.toString());
             setValue("areaId", data.areaId!);
-            setValue("indicators", data.Assemble.map((item) => item.indicator.id) as [string, ...string[]]);
+            setValue(
+              "indicators",
+              data.Assemble.map((item) => item.indicator.id) as [
+                string,
+                ...string[],
+              ],
+            );
             setValue(
               "participatingAgencies",
               data.Participating_agencies.map((item) => item.agency.id) as [
@@ -214,9 +232,14 @@ function CreateProjectModal({
                 ...string[],
               ],
             );
+            setValue(
+              "owners",
+              data.Owner.map((item) => item.personnelId.toString()) as [
+                string,
+                ...string[],
+              ],
+            );
             setValue("approvalProjectFilePath", data.approvalProjectFilePath!);
-            
-
           }
         },
       });
@@ -254,16 +277,71 @@ function CreateProjectModal({
               control={control}
             />
           </ItemStructure>
-          <ItemStructure title="เจ้าของโครงการ" required mode="vertical">
-            <ControlledSelect
-              className="w-full"
-              placeholder="เลือกเจ้าของโครงการ"
-              option={personnelOptions}
-              searchable
-              // checkIconPosition="right"
-              // searchable
+          <ItemStructure
+            title="ปีงบประมาณในการดำเนินโครงการ"
+            required
+            mode="vertical"
+          >
+            {/* <ControlledInput
+              // postfix="คน"
+              required
+              // type="string"
+              // title="ชื่อครุภัณฑ์"
+              placeholder="ระบุปีงบประมาณในการดำเนินโครงการ"
+              name="fiscal_year"
               control={control}
-              name="personnelId"
+            /> */}
+            <YearPicker
+              // value={year ? new Date(year) : null}
+              value={
+                watch("fiscal_year")
+                  ? new Date(
+                      parseInt(watch("fiscal_year")),
+                      0,
+                      1,
+                    )
+                  : null
+              }
+              onChange={(value) => {
+                setValue(
+                  "fiscal_year", value!.getFullYear().toString(),
+                );
+              }}
+            />
+          </ItemStructure>
+          {session?.user.role === Role.ADMIN && (
+            <ItemStructure title="หัวหน้าของโครงการ" required mode="vertical">
+              <ControlledSelect
+                className="w-full"
+                placeholder="เลือกหัวหน้าของโครงการ"
+                option={personnelOptions}
+                searchable
+                // checkIconPosition="right"
+                // searchable
+                control={control}
+                name="personnelId"
+              />
+            </ItemStructure>
+          )}
+
+          <ItemStructure title="ผู้รับผิดชอบโครงการ" required mode="vertical">
+            {/* <Select
+                  placeholder="เลือกประเภทโครงการ"
+                  data={projectTypeOptions}
+                /> */}
+            <ControlledMultiSelect
+              required
+              searchable
+              control={control}
+              name="owners"
+              placeholder="เลือกผู้รับผิดชอบโครงการ"
+              option={
+                personnelOptions?.filter(
+                  (person) =>
+                    person.value !== watch("personnelId") &&
+                    Number(person.value) !== session?.user.id,
+                ) ?? []
+              }
             />
           </ItemStructure>
           <ItemStructure title="สถานที่จัดโครงการ" required mode="vertical">
@@ -286,7 +364,7 @@ function CreateProjectModal({
               name="areaId"
             />
           </ItemStructure>
-          <ItemStructure
+          {/* <ItemStructure
             title="รายละเอียดสถานที่จัดโครงการ"
             required
             mode="vertical"
@@ -300,7 +378,7 @@ function CreateProjectModal({
               name="location"
               control={control}
             />
-          </ItemStructure>
+          </ItemStructure> */}
           <ItemStructure title="งบประมาณโครงการ" required mode="vertical">
             <ControlledInputNumber
               // postfix="คน"
@@ -339,14 +417,18 @@ function CreateProjectModal({
               option={indicatorOptions}
             />
           </ItemStructure>
-          <ItemStructure title="หน่วยงาน" required mode="vertical">
+          <ItemStructure
+            title="หน่วยงานร่วมดำเนินโครงการ"
+            required
+            mode="vertical"
+          >
             {/* <Select
                   placeholder="เลือกประเภทโครงการ"
                   data={projectTypeOptions}
                 /> */}
             <ControlledMultiSelect
               // className="w-full"
-              placeholder="เลือกหน่วยงาน"
+              placeholder="เลือกหน่วยงานร่วมดำเนินโครงการ"
               option={agencyOptions}
               // checkIconPosition="right"
               // searchable

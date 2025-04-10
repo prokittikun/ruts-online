@@ -68,7 +68,7 @@ import CreateProjectModal from "@/components/CreateProjectModal";
 function Index() {
   const [opened, { open, close }] = useDisclosure(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [editingProjectId, setEditingProjectId] = React.useState<string | null>(
+  const [editingProjectId, setEditingProjectId] = React.useState<number | null>(
     null,
   );
   const [searchValue, setSearchValue] = useState("");
@@ -234,7 +234,7 @@ function Index() {
     }
   };
 
-  const handleOnClickEdit = (projectId: string) => {
+  const handleOnClickEdit = (projectId: number) => {
     setIsEditMode(true);
     setEditingProjectId(projectId);
     //init form from getProjectByIdApi useQuery
@@ -244,7 +244,6 @@ function Index() {
           // Populate form with existing equipment data
           setValue("name", data.name);
           setValue("detail", data.detail);
-          setValue("location", data.location ?? "");
           setValue("project_budget", data.project_budget);
           setValue("typeId", data.project_type.id);
           setValue("date_start_the_project", data.date_start_the_project!);
@@ -534,6 +533,14 @@ function Index() {
           columns={
             [
               {
+                title: "#",
+                dataIndex: "id",
+                key: "id",
+                render: (_, r) => (
+                  <div className="whitespace-nowrap">{r.id}</div>
+                ),
+              },
+              {
                 title: "ชื่อโครงการ",
                 dataIndex: "name",
                 key: "name",
@@ -550,11 +557,11 @@ function Index() {
               //   ),
               // },
               {
-                title: "สถานที่จัดโครงการ",
-                dataIndex: "location",
-                key: "location",
+                title: "ปีงบประมาณ",
+                dataIndex: "fiscal_year",
+                key: "fiscal_year",
                 render: (_, r) => (
-                  <div className="whitespace-nowrap">{r.location}</div>
+                  <div className="whitespace-nowrap">{r.fiscal_year}</div>
                 ),
               },
               {
@@ -666,7 +673,11 @@ function Index() {
                           leftSection={<IconEdit size={"1rem"} stroke={1.5} />}
                           color="yellow"
                           size="xs"
-                          onClick={() => handleOnClickEdit(r.id)}
+                          onClick={() => {
+                            setEditingProjectId(r.id);
+                            setIsEditMode(true);
+                            open();
+                          }}
                         >
                           แก้ไข
                         </Button>
