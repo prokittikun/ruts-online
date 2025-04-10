@@ -11,7 +11,7 @@ import {
   protectedProcedure,
   publicProcedure,
 } from "@/server/api/trpc";
-import { ProjectStatus } from "@prisma/client";
+import { ProjectStatus, Role } from "@prisma/client";
 import { z } from "zod";
 const pt = protectedProcedure;
 const pb = publicProcedure;
@@ -27,7 +27,6 @@ export const createProject = pt
         typeId,
         date_end_the_project,
         date_start_the_project,
-        location,
         project_expenses = 0,
         project_budget,
         participatingAgencies,
@@ -36,6 +35,7 @@ export const createProject = pt
         indicators,
         approvalProjectFilePath,
         owners,
+        fiscal_year,
       } = input;
       return await ctx.db.project.create({
         data: {
@@ -43,11 +43,10 @@ export const createProject = pt
           detail,
           date_end_the_project,
           date_start_the_project,
-          location,
           project_expenses,
           project_budget,
           project_status: "PENDING",
-
+          fiscal_year: Number(fiscal_year),
           project_type: {
             connect: {
               id: typeId,
@@ -60,7 +59,10 @@ export const createProject = pt
           },
           Personnel: {
             connect: {
-              id: Number(personnelId),
+              id:
+                ctx.session.user.role === Role.ADMIN
+                  ? Number(personnelId)
+                  : ctx.session.user.id,
             },
           },
           Participating_agencies: {
@@ -113,7 +115,6 @@ export const updateProject = pt
         typeId,
         date_end_the_project,
         date_start_the_project,
-        location,
         project_expenses = 0,
         project_budget,
         participatingAgencies,
@@ -121,6 +122,8 @@ export const updateProject = pt
         personnelId,
         indicators,
         approvalProjectFilePath,
+        owners,
+        fiscal_year,
       } = input;
 
       // Define a properly typed update data object
@@ -129,10 +132,10 @@ export const updateProject = pt
         detail,
         date_end_the_project,
         date_start_the_project,
-        location,
         project_expenses,
         project_budget,
         project_status: "PENDING" as const,
+        fiscal_year: Number(fiscal_year),
         project_type: {
           connect: {
             id: typeId,
@@ -151,7 +154,10 @@ export const updateProject = pt
           ? {
               Personnel: {
                 connect: {
-                  id: Number(personnelId),
+                  id:
+                    ctx.session.user.role === Role.ADMIN
+                      ? Number(personnelId)
+                      : ctx.session.user.id,
                 },
               },
             }
@@ -207,6 +213,28 @@ export const updateProject = pt
         });
       }
 
+      if (owners && owners.length > 0) {
+        // First delete existing relationships
+        await ctx.db.owner.deleteMany({
+          where: {
+            projectId: id,
+          },
+        });
+
+        // Add owners to update data
+        Object.assign(updateData, {
+          Owner: {
+            create: owners.map((ownerId) => ({
+              personnel: {
+                connect: {
+                  id: Number(ownerId),
+                },
+              },
+            })),
+          },
+        });
+      }
+
       return await ctx.db.project.update({
         where: {
           id,
@@ -220,7 +248,7 @@ export const updateProject = pt
     }
   });
 export const approveProject = am
-  .input(z.string())
+  .input(z.number())
   .mutation(async ({ ctx, input }) => {
     try {
       return await ctx.db.project.update({
@@ -239,7 +267,7 @@ export const approveProject = am
   });
 
 export const rejectProject = am
-  .input(z.string())
+  .input(z.number())
   .mutation(async ({ ctx, input }) => {
     try {
       return await ctx.db.project.update({
@@ -257,7 +285,7 @@ export const rejectProject = am
     }
   });
 export const resentProject = pt
-  .input(z.string())
+  .input(z.number())
   .mutation(async ({ ctx, input }) => {
     try {
       return await ctx.db.project.update({
@@ -275,7 +303,7 @@ export const resentProject = pt
     }
   });
 export const cancelProject = pt
-  .input(z.string())
+  .input(z.number())
   .mutation(async ({ ctx, input }) => {
     try {
       return await ctx.db.project.update({
@@ -293,7 +321,7 @@ export const cancelProject = pt
     }
   });
 export const completedProject = pt
-  .input(z.string())
+  .input(z.number())
   .mutation(async ({ ctx, input }) => {
     try {
       return await ctx.db.project.update({

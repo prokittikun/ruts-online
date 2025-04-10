@@ -10,8 +10,13 @@ export default function EquipmentReport(
   props: InferGetServerSidePropsType<typeof getServerSideProps>,
 ) {
   const status = props.status == "all" ? undefined : props.status;
-  const getAllProjectByStatus =
-    api.project.getAllProjectByStatus.useQuery(status);
+  const typeId = props.typeId == "all" ? undefined : props.typeId;
+  const year = props.year == "all" ? undefined : props.year;
+  const getAllProjectByStatus = api.project.getAllProjectForReport.useQuery({
+    status: status,
+    typeId: typeId,
+    year: year,
+  });
 
   // const currentYear = new Date();
   // const gregorianYear = format(currentYear, "yyyy"); // This will always give the Gregorian year
@@ -31,9 +36,7 @@ export default function EquipmentReport(
   return (
     <div className="a4-vertical content relative flex flex-col bg-white p-2 text-[14px] text-black">
       <div>
-        <h1 className="mb-3 text-center text-lg font-bold">
-          รายงานโครงการ
-        </h1>
+        <h1 className="mb-3 text-center text-lg font-bold">รายงานโครงการ</h1>
         {/* <div className="pdf-footer">
           <span className="datetime text-sm">
             พิมพ์เมื่อ{" "}
@@ -49,19 +52,34 @@ export default function EquipmentReport(
         <table className="table-container mb-8 w-full border-collapse border border-gray-300">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border border-gray-300 px-6 py-3 text-center text-xs"
+              <th
+                className="border border-gray-300 px-6 py-3 text-center text-xs"
                 style={{ width: "10px" }}
-                >
+              >
                 ลำดับ
               </th>
-              <th className="border border-gray-300 px-6 py-3 text-center text-xs"
+              <th
+                className="border border-gray-300 px-6 py-3 text-center text-xs"
                 style={{ width: "150px" }}
-                >
+              >
                 ชื่อโครงการ
               </th>
-              <th className="border border-gray-300 px-6 py-3 text-center text-xs"
+              <th
+                className="border border-gray-300 px-6 py-3 text-center text-xs"
+                style={{ width: "150px" }}
+              >
+                งบประมาณโครงการ
+              </th>
+              <th
+                className="border border-gray-300 px-6 py-3 text-center text-xs"
+                style={{ width: "80px" }}
+              >
+                ปีงบประมาณ
+              </th>
+              <th
+                className="border border-gray-300 px-6 py-3 text-center text-xs"
                 style={{ width: "230px" }}
-                >
+              >
                 อาจารย์ผู้รับผิดชอบโครงการ
               </th>
               <th className="border border-gray-300 px-6 py-3 text-center text-xs">
@@ -85,7 +103,13 @@ export default function EquipmentReport(
                   <p className="font-semibold">{project.name}</p>
                 </td>
                 <td className="border border-gray-300 px-6 py-2 text-center text-xs">
-                  <p className="font-semibold">{project.Personnel?.name}</p>
+                  <p className="font-semibold">{project.project_budget}</p>
+                </td>
+                <td className="border border-gray-300 px-6 py-2 text-center text-xs">
+                  <p className="font-semibold">{project.fiscal_year}</p>
+                </td>
+                <td className="border border-gray-300 px-6 py-2 text-center text-xs">
+                  <p className="font-semibold">{project.Personnel?.first_name}&nbsp;{project.Personnel?.last_name}</p>
                 </td>
                 <td className="border border-gray-300 px-6 py-2 text-center text-xs">
                   <p className="font-semibold">
@@ -107,9 +131,12 @@ export default function EquipmentReport(
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
+ 
   return {
     props: {
       status: context.query.status?.toString(),
+      typeId: context.query.typeId?.toString(),
+      year: context.query.year?.toString(),
     },
   };
 }

@@ -2,6 +2,7 @@ import { CreateProjectSchema } from "@/schemas/projects/createProject";
 import { protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import paginationCalculator from "@/utils/paginationCalculator";
 import { ProjectStatus } from "@prisma/client";
+import { _TRN_X501AttributeTypeAndValueGetAttributeTypeOID } from "public/webviewer/lib/core/pdf/full/PDFNetCWasm";
 import { z } from "zod";
 const pb = publicProcedure;
 
@@ -12,12 +13,13 @@ export const getAllProject = pb
       currentPage: z.number(),
       keyword: z.string().optional(),
       status: z.array(z.nativeEnum(ProjectStatus)).optional(),
+      personnelId: z.number().optional(),
     }),
   )
   .query(async ({ ctx, input }) => {
     try {
       console.log("input");
-      const { perPages, currentPage, keyword, status } = input;
+      const { perPages, currentPage, keyword, status, personnelId } = input;
 
       const totalItems = await ctx.db.project.count({
         where: {
@@ -38,6 +40,7 @@ export const getAllProject = pb
                 }
               : {},
           ],
+          ...(personnelId && { personnelId: personnelId }),
         },
         orderBy: {
           createdAt: "desc",
@@ -68,6 +71,7 @@ export const getAllProject = pb
                 }
               : {},
           ],
+          ...(personnelId && { personnelId: personnelId }),
         },
         skip: paginate.skips,
         take: paginate.limit,
@@ -107,7 +111,7 @@ export const getProjectType = pb.query(async ({ ctx, input }) => {
 });
 
 export const getProjectById = pb
-  .input(z.string())
+  .input(z.number())
   .mutation(async ({ ctx, input }) => {
     try {
       const result = await ctx.db.project.findUnique({
@@ -125,6 +129,11 @@ export const getProjectById = pb
           Participating_agencies: {
             include: {
               agency: true,
+            },
+          },
+          Owner: {
+            include: {
+              personnel: true,
             },
           },
         },
@@ -206,13 +215,23 @@ export const getProjectTypeById = pb
     }
   });
 
-export const getAllProjectByStatus = pb
-  .input(z.string().optional())
+export const getAllProjectForReport = pb
+  .input(
+    z.object({
+      status: z.string().optional(),
+      typeId: z.string().optional(),
+      year: z.string().optional(),
+    }),
+  )
   .query(async ({ ctx, input }) => {
     try {
       const result = await ctx.db.project.findMany({
         where: {
-          project_status: input ? (input as ProjectStatus) : undefined,
+          project_status: input.status ? (input.status as ProjectStatus) : undefined,
+          project_type: {
+            id: input.typeId ? input.typeId : undefined,
+          },
+          fiscal_year: input.year ? Number(input.year) : undefined,
         },
         include: {
           project_type: true,
@@ -233,3 +252,14 @@ export const getAllProjectByStatus = pb
       }
     }
   });
+
+export const getAllProjectType = pb.query(async ({ ctx, input }) => {
+  try {
+    const result = await ctx.db.projectType.findMany();
+    return result;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(error.message);
+    }
+  }
+});

@@ -8,7 +8,7 @@ const pt = protectedProcedure;
 const pb = publicProcedure;
 const am = adminProcedure;
 export const deleteProject = pt
-  .input(z.string())
+  .input(z.number())
   .mutation(async ({ ctx, input }) => {
     try {
       return await ctx.db.project.delete({

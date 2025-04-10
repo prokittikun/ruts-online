@@ -21,6 +21,8 @@ import ControlledSelect from "./ControlledSelect";
 import ItemStructure from "./ItemStructure";
 import UploadProjectFile from "./UploadProjectFile";
 import { Role } from "@prisma/client";
+import { useSession } from "next-auth/react";
+import { YearPicker } from "@mantine/dates";
 
 interface Props {
   opened: boolean;
@@ -28,8 +30,8 @@ interface Props {
   refetch: () => void;
   isEditMode: boolean;
   setIsEditMode: (isEditMode: boolean) => void;
-  editingProjectId: string | null;
-  setEditingProjectId: (projectId: string | null) => void;
+  editingProjectId: number | null;
+  setEditingProjectId: (projectId: number | null) => void;
 }
 
 function CreateProjectModal({
@@ -41,6 +43,7 @@ function CreateProjectModal({
   editingProjectId,
   setEditingProjectId,
 }: Props) {
+  const { data: session, status } = useSession();
   const [approvalProjectFilePath, setApprovalProjectFilePath] =
     useState<string>("");
   const [supportProjectFilePath, setSupportProjectFilePath] =
@@ -59,11 +62,14 @@ function CreateProjectModal({
     enabled: !!opened,
   });
 
-  const getAllPersonnelApi = api.personnel.getAllPersonnel.useQuery({
-    role: Role.PERSONNEL
-  }, {
-    enabled: !!opened,
-  });
+  const getAllPersonnelApi = api.personnel.getAllPersonnel.useQuery(
+    {
+      role: Role.PERSONNEL,
+    },
+    {
+      enabled: !!opened,
+    },
+  );
 
   const getAllAgencyApi = api.agency.getAllAgency.useQuery(undefined, {
     enabled: !!opened,
@@ -200,12 +206,17 @@ function CreateProjectModal({
             // Populate form with existing equipment data
             setValue("name", data.name);
             setValue("detail", data.detail);
-            setValue("location", data.location ?? "");
             setValue("project_budget", data.project_budget);
-            setValue("typeId", data.project_type.id);
+            setValue("typeId", data.project_type?.id ?? "");
             setValue("date_start_the_project", data.date_start_the_project!);
             setValue("date_end_the_project", data.date_end_the_project!);
-            setValue("personnelId", data.personnelId!.toString());
+            setValue(
+              "personnelId",
+              session?.user.role == Role.ADMIN
+                ? data.personnelId!.toString()
+                : session?.user.id!.toString(),
+            );
+            setValue("fiscal_year", data.fiscal_year!.toString());
             setValue("areaId", data.areaId!);
             setValue(
               "indicators",
@@ -217,6 +228,13 @@ function CreateProjectModal({
             setValue(
               "participatingAgencies",
               data.Participating_agencies.map((item) => item.agency.id) as [
+                string,
+                ...string[],
+              ],
+            );
+            setValue(
+              "owners",
+              data.Owner.map((item) => item.personnelId.toString()) as [
                 string,
                 ...string[],
               ],
@@ -259,18 +277,53 @@ function CreateProjectModal({
               control={control}
             />
           </ItemStructure>
-          <ItemStructure title="หัวหน้าของโครงการ" required mode="vertical">
-            <ControlledSelect
-              className="w-full"
-              placeholder="เลือกหัวหน้าของโครงการ"
-              option={personnelOptions}
-              searchable
-              // checkIconPosition="right"
-              // searchable
+          <ItemStructure
+            title="ปีงบประมาณในการดำเนินโครงการ"
+            required
+            mode="vertical"
+          >
+            {/* <ControlledInput
+              // postfix="คน"
+              required
+              // type="string"
+              // title="ชื่อครุภัณฑ์"
+              placeholder="ระบุปีงบประมาณในการดำเนินโครงการ"
+              name="fiscal_year"
               control={control}
-              name="personnelId"
+            /> */}
+            <YearPicker
+              // value={year ? new Date(year) : null}
+              value={
+                watch("fiscal_year")
+                  ? new Date(
+                      parseInt(watch("fiscal_year")),
+                      0,
+                      1,
+                    )
+                  : null
+              }
+              onChange={(value) => {
+                setValue(
+                  "fiscal_year", value!.getFullYear().toString(),
+                );
+              }}
             />
           </ItemStructure>
+          {session?.user.role === Role.ADMIN && (
+            <ItemStructure title="หัวหน้าของโครงการ" required mode="vertical">
+              <ControlledSelect
+                className="w-full"
+                placeholder="เลือกหัวหน้าของโครงการ"
+                option={personnelOptions}
+                searchable
+                // checkIconPosition="right"
+                // searchable
+                control={control}
+                name="personnelId"
+              />
+            </ItemStructure>
+          )}
+
           <ItemStructure title="ผู้รับผิดชอบโครงการ" required mode="vertical">
             {/* <Select
                   placeholder="เลือกประเภทโครงการ"
@@ -284,7 +337,9 @@ function CreateProjectModal({
               placeholder="เลือกผู้รับผิดชอบโครงการ"
               option={
                 personnelOptions?.filter(
-                  (person) => person.value !== watch("personnelId"),
+                  (person) =>
+                    person.value !== watch("personnelId") &&
+                    Number(person.value) !== session?.user.id,
                 ) ?? []
               }
             />
@@ -309,7 +364,7 @@ function CreateProjectModal({
               name="areaId"
             />
           </ItemStructure>
-          <ItemStructure
+          {/* <ItemStructure
             title="รายละเอียดสถานที่จัดโครงการ"
             required
             mode="vertical"
@@ -323,7 +378,7 @@ function CreateProjectModal({
               name="location"
               control={control}
             />
-          </ItemStructure>
+          </ItemStructure> */}
           <ItemStructure title="งบประมาณโครงการ" required mode="vertical">
             <ControlledInputNumber
               // postfix="คน"
@@ -362,14 +417,18 @@ function CreateProjectModal({
               option={indicatorOptions}
             />
           </ItemStructure>
-          <ItemStructure title="หน่วยงาน" required mode="vertical">
+          <ItemStructure
+            title="หน่วยงานร่วมดำเนินโครงการ"
+            required
+            mode="vertical"
+          >
             {/* <Select
                   placeholder="เลือกประเภทโครงการ"
                   data={projectTypeOptions}
                 /> */}
             <ControlledMultiSelect
               // className="w-full"
-              placeholder="เลือกหน่วยงาน"
+              placeholder="เลือกหน่วยงานร่วมดำเนินโครงการ"
               option={agencyOptions}
               // checkIconPosition="right"
               // searchable

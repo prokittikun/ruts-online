@@ -2,7 +2,7 @@ import z from "zod";
 import { CreateProjectSchema } from "./createProject";
 
 export const UpdateProjectSchema = CreateProjectSchema.extend({
-  id: z.string({
+  id: z.number({
     description: "Project ID",
     required_error: "ต้องระบุ Project ID",
   }),

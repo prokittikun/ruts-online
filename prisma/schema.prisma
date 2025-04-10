@@ -50,7 +50,7 @@ model Personnel {
 model Owner {
     id          Int       @id @default(autoincrement())
     project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    projectId   String
+    projectId   Int
     personnel   Personnel @relation(fields: [personnelId], references: [id], onDelete: Cascade)
     personnelId Int
 }
@@ -79,9 +79,10 @@ model Agency {
 }
 
 model Project {
-    id                      String                   @id @default(uuid())
+    id                      Int                      @id @default(autoincrement())
     name                    String
     detail                  String
+    fiscal_year             Int?
     date_start_the_project  DateTime?
     date_end_the_project    DateTime?
     location                String?
@@ -105,7 +106,7 @@ model Project {
 
 model Participating_agencies {
     Project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    projectId  String
+    projectId  Int
     agency     Agency   @relation(fields: [agencyId], references: [id], onDelete: Cascade)
     agencyId   String
     assignedAt DateTime @default(now())
@@ -123,7 +124,7 @@ model Assemble {
     id          String     @id @default(uuid())
     name        String
     project     Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
-    projectId   String
+    projectId   Int
     indicator   Indicators @relation(fields: [indicatorId], references: [id], onDelete: Cascade)
     indicatorId String
 }

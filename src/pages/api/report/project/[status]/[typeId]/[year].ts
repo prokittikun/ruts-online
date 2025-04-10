@@ -5,6 +5,8 @@ import { env } from "@/env";
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const status = req.query.status?.toString();
+  const typeId = req.query.typeId?.toString();
+  const year = req.query.year?.toString();
 
   const browser = await puppeteer.launch({
     headless: true,
@@ -26,7 +28,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
   await page.setViewport({ width: 1000, height: 0 });
 
-  await page.goto(`${process.env.NEXTAUTH_URL}/report/project/${status}`, {
+  await page.goto(`${process.env.NEXTAUTH_URL}/report/project/${status}/${typeId}/${year}`, {
     waitUntil: "networkidle2",
   });
 
